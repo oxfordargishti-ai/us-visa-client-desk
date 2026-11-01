@@ -22,7 +22,12 @@ export interface DashboardData {
 
 const TASK = `t.*, c.full_name AS client_name, c.phone AS client_phone, c.whatsapp AS client_whatsapp`;
 
-export async function getDashboard(q: Q, userId: string, tz: string, now = new Date()): Promise<DashboardData> {
+/** Either one transaction (tests) or a runner that executes each query in its own parallel transaction (pages — much faster on a remote database). */
+export type QueryRunner = Q | (<T>(fn: (q: Q) => Promise<T>) => Promise<T>);
+
+export async function getDashboard(source: QueryRunner, userId: string, tz: string, now = new Date()): Promise<DashboardData> {
+  const run = typeof source === "function" ? source : <T,>(fn: (q: Q) => Promise<T>) => fn(source);
+  const q: Q = { query: (sql, params) => run((x) => x.query(sql, params)) };
   const day = dayBoundsUtc(tz, now);
   const nowIso = now.toISOString();
   const weekStart = DateTime.fromJSDate(now).setZone(tz).startOf("day").minus({ days: 6 });

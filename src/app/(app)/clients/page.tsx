@@ -1,6 +1,5 @@
-import { requireUser } from "@/lib/session";
-import { withUser } from "@/lib/db";
-import { getPrefs } from "@/lib/repo/prefs";
+import { requireUser, getCurrentPrefs } from "@/lib/session";
+import { parallelReader } from "@/lib/db";
 import { ClientListQuery, listClients } from "@/lib/repo/clients";
 import { ClientsView } from "@/components/clients-view";
 
@@ -12,10 +11,14 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   const parsed = ClientListQuery.safeParse({ q: sp.q || undefined, status: sp.status || undefined, visa: sp.visa || undefined, limit: 300 });
   const filters = parsed.success ? parsed.data : ClientListQuery.parse({});
   const user = await requireUser();
-  const { clients, all, tz } = await withUser(user.id, async (q) => {
-    const prefs = await getPrefs(q, user.id);
-    return { tz: prefs.timezone, clients: await listClients(q, user.id, filters), all: await listClients(q, user.id, { limit: 500 }) };
-  });
+  const filtered = Boolean(filters.q || filters.status || filters.visa);
+  const [prefs, clients, everyone] = await Promise.all([
+    getCurrentPrefs(),
+    listClients(parallelReader(user.id), user.id, filters),
+    filtered ? listClients(parallelReader(user.id), user.id, { limit: 500 }) : Promise.resolve(null),
+  ]);
+  const all = everyone ?? clients;
+  const tz = prefs.timezone;
   const counts: Record<string, number> = {};
   for (const c of all) if (c.application_status) counts[c.application_status] = (counts[c.application_status] ?? 0) + 1;
   const visas = [...new Set(all.map((c) => c.visa_category).filter(Boolean))] as string[];

@@ -37,3 +37,12 @@ export async function clearSessionCookie() {
 export async function currentSessionToken(): Promise<string | undefined> {
   return (await cookies()).get(SESSION_COOKIE)?.value;
 }
+
+/** The signed-in user's preferences, loaded once per request and shared by the layout and the page. */
+export const getCurrentPrefs = cache(async () => {
+  const user = await requireUser();
+  const { withUser, readAsUser } = await import("./db");
+  const { getPrefs } = await import("./repo/prefs");
+  const [row] = await readAsUser<import("./types").Prefs>(user.id, "SELECT * FROM user_preferences WHERE user_id = $1", [user.id]);
+  return row ?? withUser(user.id, (q) => getPrefs(q, user.id)); // first visit: create the defaults
+});

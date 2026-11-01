@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/session";
-import { withUser } from "@/lib/db";
-import { getPrefs } from "@/lib/repo/prefs";
+import { requireUser, getCurrentPrefs } from "@/lib/session";
+import { parallelReader } from "@/lib/db";
 import { getClientDetail } from "@/lib/repo/clients";
 import { ClientDetail } from "@/components/client-detail";
 import { zId } from "@/lib/errors";
@@ -17,10 +16,8 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
   const sp = await searchParams;
   if (!zId.safeParse(id).success) notFound();
   const user = await requireUser();
-  const res = await withUser(user.id, async (q) => {
-    const prefs = await getPrefs(q, user.id);
-    return { prefs, detail: await getClientDetail(q, user.id, id), defaults: prefs.default_interview_reminders };
-  });
+  const [prefs, detail] = await Promise.all([getCurrentPrefs(), getClientDetail(parallelReader(user.id), user.id, id)]);
+  const res = { prefs, detail, defaults: prefs.default_interview_reminders };
   if (!res.detail) notFound();
   return <ClientDetail detail={res.detail} tz={res.prefs.timezone} defaults={res.defaults} initialTab={sp.tab ?? "overview"} />;
 }

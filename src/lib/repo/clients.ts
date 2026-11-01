@@ -159,13 +159,12 @@ export async function createCase(q: Q, userId: string, clientId: string, input: 
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
     [userId, clientId, input.visa_category, input.application_status, input.embassy ?? null, input.ds160_confirmation ?? null, input.payment_status, input.interview_prep_status],
   );
-  let i = 0;
-  for (const item of DEFAULT_DOCUMENT_CHECKLIST) {
-    await q.query(
-      "INSERT INTO document_checklists (user_id, client_id, case_id, label, category, required, sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7)",
-      [userId, clientId, kase.id, item.label, item.category, item.required, i++],
-    );
-  }
+  // One statement for the whole default checklist instead of one round trip per item.
+  await q.query(
+    `INSERT INTO document_checklists (user_id, client_id, case_id, label, category, required, sort_order)
+     SELECT $1, $2, $3, l, c, r, o - 1 FROM unnest($4::text[], $5::text[], $6::boolean[]) WITH ORDINALITY AS x(l, c, r, o)`,
+    [userId, clientId, kase.id, DEFAULT_DOCUMENT_CHECKLIST.map((i) => i.label), DEFAULT_DOCUMENT_CHECKLIST.map((i) => i.category), DEFAULT_DOCUMENT_CHECKLIST.map((i) => i.required)],
+  );
   return kase;
 }
 

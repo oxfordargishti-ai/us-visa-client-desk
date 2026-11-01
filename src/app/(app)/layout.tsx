@@ -1,6 +1,5 @@
-import { requireUser } from "@/lib/session";
-import { withUser } from "@/lib/db";
-import { getPrefs } from "@/lib/repo/prefs";
+import { requireUser, getCurrentPrefs } from "@/lib/session";
+import { readAsUser } from "@/lib/db";
 import { capabilities, env } from "@/lib/env";
 import { AppShell } from "@/components/app-shell";
 
@@ -8,11 +7,10 @@ export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const { prefs, unread } = await withUser(user.id, async (q) => {
-    const prefs = await getPrefs(q, user.id);
-    const [{ n }] = await q.query<{ n: number }>("SELECT count(*)::int AS n FROM notification_deliveries WHERE user_id=$1 AND channel='inapp' AND read_at IS NULL", [user.id]);
-    return { prefs, unread: n };
-  });
+  const [prefs, unread] = await Promise.all([
+    getCurrentPrefs(),
+    readAsUser<{ n: number }>(user.id, "SELECT count(*)::int AS n FROM notification_deliveries WHERE user_id=$1 AND channel='inapp' AND read_at IS NULL", [user.id]).then((r) => r[0].n),
+  ]);
   const caps = capabilities();
   return (
     <AppShell

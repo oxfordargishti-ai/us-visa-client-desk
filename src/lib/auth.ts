@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { promisify } from "node:util";
-import { withSystem, type Q } from "./db";
+import { withSystem, readAsSystem, type Q } from "./db";
 import { sha256, randomToken } from "./crypto";
 
 const scrypt = promisify(crypto.scrypt) as (pw: string, salt: Buffer, len: number, opts: crypto.ScryptOptions) => Promise<Buffer>;
@@ -83,22 +83,21 @@ export async function createSession(userId: string, meta: { ip?: string | null; 
 
 export async function getSessionUser(token: string | undefined | null): Promise<SessionUser | null> {
   if (!token || token.length < 20) return null;
-  return withSystem(async (q) => {
-    const [row] = await q.query<SessionUser & { last_seen_at: string }>(
-      `SELECT u.id, u.email, u.name, u.role, s.last_seen_at
-         FROM sessions s JOIN users u ON u.id = s.user_id
-        WHERE s.id = $1 AND s.expires_at > now() AND u.deleted_at IS NULL`,
-      [sha256(token)],
-    );
-    if (!row) return null;
-    const idleMs = Date.now() - new Date(row.last_seen_at).getTime();
-    if (idleMs > SESSION_IDLE_DAYS * 86_400_000) {
-      await q.query("DELETE FROM sessions WHERE id = $1", [sha256(token)]);
-      return null;
-    }
-    if (idleMs > 5 * 60_000) await q.query("UPDATE sessions SET last_seen_at = now() WHERE id = $1", [sha256(token)]);
-    return { id: row.id, email: row.email, name: row.name, role: row.role };
-  });
+  // Read in one round trip; the rare writes (idle expiry, last-seen refresh every 5 minutes) take a separate transaction.
+  const [row] = await readAsSystem<SessionUser & { last_seen_at: string }>(
+    `SELECT u.id, u.email, u.name, u.role, s.last_seen_at
+       FROM sessions s JOIN users u ON u.id = s.user_id
+      WHERE s.id = $1 AND s.expires_at > now() AND u.deleted_at IS NULL`,
+    [sha256(token)],
+  );
+  if (!row) return null;
+  const idleMs = Date.now() - new Date(row.last_seen_at).getTime();
+  if (idleMs > SESSION_IDLE_DAYS * 86_400_000) {
+    await withSystem((q) => q.query("DELETE FROM sessions WHERE id = $1", [sha256(token)]));
+    return null;
+  }
+  if (idleMs > 5 * 60_000) await withSystem((q) => q.query("UPDATE sessions SET last_seen_at = now() WHERE id = $1", [sha256(token)]));
+  return { id: row.id, email: row.email, name: row.name, role: row.role };
 }
 
 export async function destroySession(token: string | undefined | null) {

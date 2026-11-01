@@ -27,6 +27,21 @@ export async function GET() {
       const { withSystem } = await import("@/lib/db");
       await withSystem((q) => q.query("SELECT 1"));
       add("Database reachable", true, "Connected");
+      // Speed: one round trip to the database, and where the app and the database each run.
+      const { readAsSystem } = await import("@/lib/db");
+      const times: number[] = [];
+      for (let i = 0; i < 3; i++) {
+        const t = performance.now();
+        await readAsSystem("SELECT 1");
+        times.push(performance.now() - t);
+      }
+      const ms = Math.round(Math.min(...times));
+      let dbRegion = "unknown";
+      try {
+        dbRegion = new URL(env.databaseUrl).hostname.match(/\.([a-z]{2}-[a-z]+-\d)\./)?.[1] ?? "unknown";
+      } catch {}
+      const appRegion = process.env.VERCEL_REGION || "local";
+      add("Database speed", ms < 40, `${ms} ms per request · app runs in ${appRegion}, database in ${dbRegion}${ms >= 40 ? " — they are far apart; moving them to the same region makes every page faster" : ""}`);
       if (process.env.AUTO_MIGRATE === "true") {
         const { runMigrations } = await import("@/lib/db/migrate");
         const applied = await runMigrations();

@@ -1,4 +1,4 @@
-import { withSystem } from "./index";
+import { withSystem, readAsSystem } from "./index";
 import { createUser, passwordPolicyError } from "../auth";
 import { env } from "../env";
 
@@ -9,7 +9,7 @@ export type BootstrapResult = "created" | "exists" | "skipped";
  * so it can never overwrite or add accounts later. Safe to call on every boot.
  */
 export async function bootstrapOwner(): Promise<BootstrapResult> {
-  const [{ n }] = await withSystem((q) => q.query<{ n: number }>("SELECT count(*)::int AS n FROM users"));
+  const [{ n }] = await readAsSystem<{ n: number }>("SELECT count(*)::int AS n FROM users");
   if (n > 0) return "exists";
   if (!env.ownerEmail || !env.ownerPassword) return "skipped";
   const problem = passwordPolicyError(env.ownerPassword, env.ownerEmail);
