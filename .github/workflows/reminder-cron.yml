@@ -1,0 +1,19 @@
+# Free scheduler for reminders. GitHub's schedule is best-effort (every 5 minutes at most, sometimes delayed).
+# For minute-accurate reminders use Vercel Cron on a Pro plan or cron-job.org (see README → "Reminder scheduler").
+# Repository secrets needed: APP_URL (e.g. https://desk.example.com) and CRON_SECRET (same value as on the server).
+name: Reminder scheduler
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Call the dispatcher
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -fsS --retry 3 --retry-delay 5 --max-time 55 -X POST "$APP_URL/api/cron/dispatch" -H "Authorization: Bearer $CRON_SECRET"
