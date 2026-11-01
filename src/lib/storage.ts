@@ -51,6 +51,26 @@ const localDriver = (): StorageDriver => {
   };
 };
 
+/** Turns a storage-provider error into a plain-language message (never includes keys). */
+export function storageError(e: unknown): Error {
+  const err = e as { name?: string; Code?: string; message?: string; $metadata?: { httpStatusCode?: number } };
+  const code = err.Code || err.name || "Error";
+  const status = err.$metadata?.httpStatusCode;
+  const hint =
+    /InvalidAccessKeyId|SignatureDoesNotMatch|Unauthorized|InvalidArgument.*Credential/i.test(code + (err.message ?? "")) || status === 401
+      ? "The storage keys don't match — re-copy S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY (no spaces) and redeploy."
+      : /AccessDenied/i.test(code) || status === 403
+        ? "The storage key isn't allowed to write to this bucket — give the API token Object Read & Write on the bucket named in S3_BUCKET."
+        : /NoSuchBucket/i.test(code) || status === 404
+          ? "No bucket with the name in S3_BUCKET exists at that S3_ENDPOINT — check the spelling."
+          : /ENOTFOUND|EAI_AGAIN|getaddrinfo/i.test(err.message ?? "")
+            ? "The storage address in S3_ENDPOINT can't be reached — check it."
+            : "";
+  const out = new Error(`Storage ${code}${status ? ` (${status})` : ""}: ${hint || (err.message ?? "").slice(0, 160)}`);
+  out.name = "StorageError";
+  return out;
+}
+
 const s3Driver = (): StorageDriver => {
   const cfg = env.storage;
   let clientP: Promise<import("@aws-sdk/client-s3").S3Client> | null = null;
@@ -62,13 +82,19 @@ const s3Driver = (): StorageDriver => {
           endpoint: cfg.endpoint || undefined,
           forcePathStyle: Boolean(cfg.endpoint),
           credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey },
+          // S3-compatible services (Cloudflare R2, Backblaze…) don't all accept the newer default checksum headers.
+          ...(cfg.endpoint ? { requestChecksumCalculation: "WHEN_REQUIRED" as const, responseChecksumValidation: "WHEN_REQUIRED" as const } : {}),
         }),
     ));
   return {
     name: "s3",
     async put(key, body, contentType) {
       const { PutObjectCommand } = await import("@aws-sdk/client-s3");
-      await (await client()).send(new PutObjectCommand({ Bucket: cfg.bucket, Key: key, Body: body, ContentType: contentType }));
+      try {
+        await (await client()).send(new PutObjectCommand({ Bucket: cfg.bucket, Key: key, Body: body, ContentType: contentType }));
+      } catch (e) {
+        throw storageError(e);
+      }
     },
     async get(key) {
       const { GetObjectCommand } = await import("@aws-sdk/client-s3");
@@ -95,7 +121,11 @@ const s3Driver = (): StorageDriver => {
 
 export function getStorage(): StorageDriver {
   if (env.storage.driver === "s3") {
-    if (!env.storage.bucket || !env.storage.accessKeyId) throw new Error("S3 storage selected but S3_BUCKET / S3_ACCESS_KEY_ID are not set");
+    if (!env.storage.bucket || !env.storage.accessKeyId || !env.storage.secretAccessKey) {
+      const e = new Error("Storage is set to S3 but S3_BUCKET, S3_ACCESS_KEY_ID or S3_SECRET_ACCESS_KEY is missing — add it in the server settings and redeploy.");
+      e.name = "StorageError";
+      throw e;
+    }
     return s3Driver();
   }
   if (env.isProd && !process.env.ALLOW_LOCAL_STORAGE_IN_PRODUCTION) {

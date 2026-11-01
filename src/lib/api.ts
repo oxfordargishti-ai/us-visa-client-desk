@@ -107,6 +107,11 @@ export function handler<S extends z.ZodType | undefined = undefined, P extends R
       if (e instanceof HttpError) {
         return NextResponse.json({ error: e.message, code: e.code, details: e.details }, { status: e.status });
       }
+      // Storage problems are configuration problems the owner can fix — their messages are written for people and contain no secrets.
+      if (e instanceof Error && e.name === "StorageError") {
+        console.error("[api] storage error:", e.message);
+        return NextResponse.json({ error: e.message, code: "storage" }, { status: 502 });
+      }
       // Never echo internals (or request bodies, which may contain client data) to the browser or the logs.
       console.error("[api] unhandled error:", e instanceof Error ? `${e.name}: ${e.message}` : "unknown");
       return NextResponse.json({ error: "Something went wrong on our side. Please try again.", code: "internal" }, { status: 500 });

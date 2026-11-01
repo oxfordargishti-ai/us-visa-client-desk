@@ -41,6 +41,21 @@ export async function GET() {
       add("Database setup", false, clean(e instanceof Error ? e.message : String(e)));
     }
   }
+  if (env.storage.driver === "s3") {
+    try {
+      const { getStorage } = await import("@/lib/storage");
+      const st = getStorage();
+      const key = `_setup-check/${Date.now()}.txt`;
+      await st.put(key, Buffer.from("ok"), "text/plain");
+      const back = await st.get(key);
+      await st.delete(key).catch(() => {});
+      add("Document storage", back?.body.toString() === "ok", back ? "Upload, read and delete all work" : "Saved a test file but couldn't read it back");
+    } catch (e) {
+      add("Document storage", false, clean(e instanceof Error ? e.message : String(e)));
+    }
+  } else {
+    add("Document storage", !env.isProd, env.isProd ? "STORAGE_DRIVER is not s3 — uploads won't work on this host" : "Local folder (development)");
+  }
   const ok = steps.every((s) => s.ok);
   return NextResponse.json({ ok, steps }, { status: ok ? 200 : 500, headers: { "Cache-Control": "no-store" } });
 }

@@ -62,11 +62,13 @@ export const env = {
     return {
       driver: (process.env.STORAGE_DRIVER || "local") as "local" | "s3",
       localDir: process.env.STORAGE_LOCAL_DIR || "./storage-local",
-      bucket: process.env.S3_BUCKET || "",
-      region: process.env.S3_REGION || "auto",
-      endpoint: process.env.S3_ENDPOINT || "",
-      accessKeyId: process.env.S3_ACCESS_KEY_ID || "",
-      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",
+      // Values are trimmed: a space or line break picked up while copy-pasting a key is the most common setup mistake.
+      bucket: (process.env.S3_BUCKET || "").trim(),
+      region: (process.env.S3_REGION || "auto").trim(),
+      // Accept the address Cloudflare shows with the bucket name on the end (…r2.cloudflarestorage.com/<bucket>).
+      endpoint: (process.env.S3_ENDPOINT || "").trim().replace(/\/+$/, "").replace(new RegExp(`/${(process.env.S3_BUCKET || "").trim()}$`), ""),
+      accessKeyId: (process.env.S3_ACCESS_KEY_ID || "").trim(),
+      secretAccessKey: (process.env.S3_SECRET_ACCESS_KEY || "").trim(),
     };
   },
   get ownerEmail() {
