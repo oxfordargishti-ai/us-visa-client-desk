@@ -78,6 +78,19 @@ export function NotificationsView() {
     }
   }
 
+  const [emailBusy, setEmailBusy] = React.useState(false);
+  async function testEmail() {
+    setEmailBusy(true);
+    try {
+      const r = await api<{ ok: boolean; to: string }>("/api/notifications/test-email", { body: {} });
+      toast({ tone: "success", title: "Test email sent", body: `Check the inbox of ${r.to} (and the spam folder).` });
+    } catch (e) {
+      toast({ tone: "error", title: "Test email failed", body: e instanceof ApiError ? e.message : undefined });
+    } finally {
+      setEmailBusy(false);
+    }
+  }
+
   const inbox = data?.notifications.filter((n) => n.channel === "inapp") ?? [];
   const log = data?.notifications.filter((n) => n.channel !== "inapp" || n.status !== "sent") ?? [];
   const pushConfigured = app.caps.push;
@@ -128,6 +141,7 @@ export function NotificationsView() {
                     </>
                   )}
                   {(!pushConfigured || push === "unsupported" || push === "needs-install" || push === "denied") && <Button variant="gold" onClick={test} loading={busy}><Send className="size-4" /> Send in-app test</Button>}
+                  {app.caps.email && <Button variant="outline" className="!border-white/25 !bg-white/10 !text-white hover:!bg-white/20" onClick={testEmail} loading={emailBusy}><Mail className="size-4" /> Send test email</Button>}
                 </div>
               </div>
               <AnimatePresence>
