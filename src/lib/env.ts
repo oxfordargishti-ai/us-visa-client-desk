@@ -87,6 +87,8 @@ export const capabilities = () => ({
   google: Boolean(env.googleClientId && env.googleClientSecret),
   googleLogin: env.googleLoginEnabled && Boolean(env.googleClientId && env.googleClientSecret),
   storage: env.storage.driver,
+  // Vercel rejects request bodies over 4.5 MB before they reach the app, so uploads there are capped at 4 MB.
+  maxUploadMb: process.env.VERCEL ? 4 : 15,
 });
 
 /**

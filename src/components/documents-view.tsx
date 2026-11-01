@@ -130,7 +130,7 @@ function UploadModal({ open, onClose, clients, defaultClient }: { open: boolean;
     for (const f of files) {
       const fd = new FormData();
       fd.set("file", f); fd.set("client_id", client); fd.set("category", cat);
-      try { await upload("/api/documents", fd); ok++; } catch (e) { toast({ tone: "error", title: `${f.name} wasn't saved`, body: e instanceof ApiError ? e.message : undefined }); }
+      try { await upload("/api/documents", fd, app.caps.maxUploadMb ?? 15); ok++; } catch (e) { toast({ tone: "error", title: `${f.name} wasn't saved`, body: e instanceof ApiError ? e.message : undefined }); }
     }
     setBusy(false);
     if (ok) { toast({ tone: "success", title: `${ok} document${ok > 1 ? "s" : ""} stored privately` }); app.bumpData(); onClose(); }
@@ -143,7 +143,7 @@ function UploadModal({ open, onClose, clients, defaultClient }: { open: boolean;
         <div onDragOver={(e) => (e.preventDefault(), setDrag(true))} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); setFiles([...files, ...Array.from(e.dataTransfer.files)]); }} className={cn("rounded-2xl border-2 border-dashed p-6 text-center transition", drag ? "border-gold bg-gold/10" : "border-linestrong")}>
           <Upload className="mx-auto mb-2 size-6 text-goldink" />
           <p className="text-sm font-medium">Drop files here or <button type="button" className="font-semibold text-goldink underline" onClick={() => ref.current?.click()}>browse</button></p>
-          <p className="mt-1 text-xs text-muted">PDF, JPG, PNG, WEBP, HEIC, DOCX · max 15 MB each</p>
+          <p className="mt-1 text-xs text-muted">PDF, JPG, PNG, WEBP, HEIC, DOCX · max {app.caps.maxUploadMb ?? 15} MB each</p>
           <input ref={ref} type="file" multiple hidden accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.docx,.txt" onChange={(e) => { setFiles([...files, ...Array.from(e.target.files ?? [])]); e.target.value = ""; }} />
         </div>
         {files.length > 0 && <ul className="space-y-1.5">{files.map((f, i) => <li key={i} className="flex items-center justify-between rounded-xl bg-surface2 px-3 py-2 text-sm"><span className="truncate">{f.name}</span><button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="ml-3 text-xs font-semibold text-danger">Remove</button></li>)}</ul>}

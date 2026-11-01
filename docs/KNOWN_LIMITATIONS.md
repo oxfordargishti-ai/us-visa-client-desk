@@ -33,3 +33,6 @@ These were exercised against local stand-ins (and unit tests) but **not** agains
 * No automated legal conclusions, eligibility checks or approval predictions (per the brief).
 * No sending, deleting, archiving or modifying Gmail (read-only by design).
 * No fake "success" paths: when a service isn't configured the UI says so and offers the manual alternative.
+
+## Upload size on Vercel
+Vercel rejects request bodies larger than 4.5 MB before they reach the app, so on Vercel uploads are capped at **4 MB** per file (15 MB elsewhere). The app checks this in the browser and explains it. Lifting it requires uploading straight from the browser to the storage bucket with a signed upload link (plus a CORS rule on the bucket) — not implemented yet.

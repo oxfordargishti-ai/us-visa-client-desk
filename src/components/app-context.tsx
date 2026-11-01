@@ -17,7 +17,7 @@ export interface AppCtxValue {
   user: { id: string; name: string; email: string };
   tz: string;
   soundEnabled: boolean;
-  caps: { ai: boolean; push: boolean; email: boolean; google: boolean; googleLogin: boolean; storage: string };
+  caps: { ai: boolean; push: boolean; email: boolean; google: boolean; googleLogin: boolean; storage: string; maxUploadMb?: number };
   vapidKey: string;
   defaultReminders: number[];
   aiEnabled: boolean;

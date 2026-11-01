@@ -343,7 +343,7 @@ export function DocumentsTab({ client, documents, checklist, caseId }: { client:
       fd.set("category", category);
       if (caseId) fd.set("case_id", caseId);
       try {
-        await upload("/api/documents", fd);
+        await upload("/api/documents", fd, app.caps.maxUploadMb ?? 15);
         toast({ tone: "success", title: "Document stored privately", body: file.name });
       } catch (e) {
         toast({ tone: "error", title: `Couldn't upload ${file.name}`, body: e instanceof ApiError ? e.message : undefined });
@@ -395,7 +395,7 @@ export function DocumentsTab({ client, documents, checklist, caseId }: { client:
         >
           <motion.div animate={drag ? { scale: 1.12, y: -4 } : { scale: 1, y: 0 }} className="mx-auto mb-3 grid size-14 place-items-center rounded-2xl bg-gold/15 text-goldink"><Upload className="size-6" /></motion.div>
           <p className="font-display text-xl font-semibold">Drop files here</p>
-          <p className="mt-1 text-sm text-muted">PDF, JPG, PNG, WEBP, HEIC, DOCX · up to 15 MB · stored privately</p>
+          <p className="mt-1 text-sm text-muted">PDF, JPG, PNG, WEBP, HEIC, DOCX · up to {app.caps.maxUploadMb ?? 15} MB · stored privately</p>
           <div className="mx-auto mt-4 flex max-w-sm flex-col gap-2 sm:flex-row">
             <Select value={cat} onChange={(e) => setCat(e.target.value)} aria-label="Document category" className="h-11">{DOCUMENT_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</Select>
             <Button variant="gold" loading={uploading} onClick={() => fileRef.current?.click()}><Paperclip className="size-4" /> Choose file</Button>

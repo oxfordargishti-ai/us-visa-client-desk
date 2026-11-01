@@ -31,8 +31,14 @@ export async function api<T = unknown>(url: string, opts: { method?: string; bod
   return data as T;
 }
 
-export async function upload<T = unknown>(url: string, form: FormData): Promise<T> {
+export async function upload<T = unknown>(url: string, form: FormData, maxMb = 15): Promise<T> {
+  for (const v of form.values()) {
+    if (v instanceof File && v.size > maxMb * 1024 * 1024) {
+      throw new ApiError(413, `${v.name} is ${(v.size / 1048576).toFixed(1)} MB — the limit is ${maxMb} MB. Compress it or split the PDF and try again.`, "too_large");
+    }
+  }
   const res = await fetch(url, { method: "POST", body: form, credentials: "same-origin" });
+  if (res.status === 413) throw new ApiError(413, `That file is too large — the limit is ${maxMb} MB. Compress it or split the PDF and try again.`, "too_large");
   const data = (await res.json().catch(() => null)) as { error?: string; code?: string } | null;
   if (!res.ok) throw new ApiError(res.status, data?.error ?? "Upload failed. Please try again.", data?.code);
   return data as T;

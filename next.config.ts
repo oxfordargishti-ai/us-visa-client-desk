@@ -2,14 +2,27 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
 
+// Document previews (PDF frame / image) are served from 60-second signed links on the storage provider, so the page must
+// be allowed to show content from that one origin. Read at build time; a redeploy after changing S3_ENDPOINT picks it up.
+function storageOrigin(): string {
+  if (process.env.STORAGE_DRIVER !== "s3") return "";
+  try {
+    if (process.env.S3_ENDPOINT) return new URL(process.env.S3_ENDPOINT).origin;
+  } catch {
+    return "";
+  }
+  return "https://*.amazonaws.com"; // AWS S3 (virtual-hosted bucket URLs)
+}
+const files = storageOrigin() ? ` ${storageOrigin()}` : "";
+
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  `img-src 'self' data: blob:${files}`,
   "font-src 'self' data:",
   "connect-src 'self'",
-  "frame-src 'self'",
+  `frame-src 'self'${files}`,
   "media-src 'self' blob:",
   "worker-src 'self'",
   "manifest-src 'self'",
