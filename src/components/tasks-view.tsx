@@ -13,6 +13,7 @@ import { fmt, relativeDay } from "@/lib/client/format";
 import { DateTime } from "luxon";
 import type { Task } from "@/lib/types";
 import type { PlanSuggestion } from "@/lib/ai/assist";
+import { tr } from "@/lib/i18n";
 
 type View = "today" | "upcoming" | "overdue" | "all" | "completed";
 
@@ -40,18 +41,18 @@ export function TasksView({ view, tasks, deadlines, tz, counts }: { view: View; 
   const app = useApp();
   const router = useRouter();
   const [q, setQ] = React.useState("");
-  const filtered = React.useMemo(() => (q ? tasks.filter((t) => `${t.title} ${t.client_name ?? ""} ${t.category}`.toLowerCase().includes(q.toLowerCase())) : tasks), [tasks, q]);
+  const filtered = React.useMemo(() => (q ? tasks.filter((t) => `${t.title} ${t.client_name ?? ""} ${tr(t.category)}`.toLowerCase().includes(q.toLowerCase())) : tasks), [tasks, q]);
 
   return (
     <Stagger className="space-y-6">
       <Rise className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink">{view === "today" ? "Daily planner" : "Task list"}</p>
-          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">My Tasks</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink">{view === "today" ? tr("Daily planner") : tr("Task list")}</p>
+          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">{tr("My Tasks")}</h1>
         </div>
         <div className="hidden sm:block">
           <Button variant="gold" size="lg" onClick={() => app.openQuickAdd()}>
-            <Sparkles className="size-4" /> New task
+            <Sparkles className="size-4" />{" "}{tr("New task")}
           </Button>
         </div>
       </Rise>
@@ -63,9 +64,9 @@ export function TasksView({ view, tasks, deadlines, tz, counts }: { view: View; 
             value={view}
             onChange={(v) => router.replace(`/tasks?view=${v}`, { scroll: false })}
             options={[
-              { value: "today", label: <>Today{counts.today ? <span className="ml-1.5 rounded-full bg-navy/10 px-1.5 text-xs dark:bg-navy/20">{counts.today}</span> : null}</> },
+              { value: "today", label: <>{tr("Today")}{counts.today ? <span className="ml-1.5 rounded-full bg-navy/10 px-1.5 text-xs dark:bg-navy/20">{counts.today}</span> : null}</> },
               { value: "upcoming", label: "Upcoming" },
-              { value: "overdue", label: <>Overdue{counts.overdue ? <span className="ml-1.5 rounded-full bg-danger px-1.5 text-xs text-white">{counts.overdue}</span> : null}</> },
+              { value: "overdue", label: <>{tr("Overdue")}{counts.overdue ? <span className="ml-1.5 rounded-full bg-danger px-1.5 text-xs text-white">{counts.overdue}</span> : null}</> },
               { value: "all", label: "All open" },
               { value: "completed", label: "Completed" },
             ]}
@@ -73,7 +74,7 @@ export function TasksView({ view, tasks, deadlines, tz, counts }: { view: View; 
         </div>
         <div className="relative md:w-72">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter this list…" aria-label="Filter tasks" className="h-11 w-full rounded-xl border border-linestrong bg-surface pl-10 pr-3 text-[15px] focus:border-gold focus:outline-none focus:ring-4 focus:ring-gold/20" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr("Filter this list…")} aria-label={tr("Filter tasks")} className="h-11 w-full rounded-xl border border-linestrong bg-surface pl-10 pr-3 text-[15px] focus:border-gold focus:outline-none focus:ring-4 focus:ring-gold/20" />
         </div>
       </Rise>
 
@@ -96,9 +97,9 @@ function GroupedList({ tasks, tz, view }: { tasks: Task[]; tz: string; view: Vie
       <Card className="p-4">
         <EmptyState
           icon={view === "completed" ? <CheckCheck className="size-6" /> : <CircleCheck className="size-6" />}
-          title={view === "overdue" ? "Nothing overdue" : view === "completed" ? "No completed tasks yet" : "No tasks here"}
-          body={view === "overdue" ? "You're fully caught up. Lovely." : "Add a task and it will appear here."}
-          action={<Button variant="gold" size="sm" onClick={() => app.openQuickAdd()}><Plus className="size-4" /> New task</Button>}
+          title={view === "overdue" ? tr("Nothing overdue") : view === "completed" ? tr("No completed tasks yet") : tr("No tasks here")}
+          body={view === "overdue" ? tr("You're fully caught up. Lovely.") : tr("Add a task and it will appear here.")}
+          action={<Button variant="gold" size="sm" onClick={() => app.openQuickAdd()}><Plus className="size-4" />{" "}{tr("New task")}</Button>}
         />
       </Card>
     );
@@ -114,7 +115,7 @@ function GroupedList({ tasks, tz, view }: { tasks: Task[]; tz: string; view: Vie
       {[...groups.entries()].map(([key, items]) => (
         <Card key={key} className="p-4 sm:p-5">
           <div className="mb-2 flex items-baseline justify-between px-2">
-            <h2 className="font-display text-2xl font-semibold">{key === "none" ? "No date" : relativeDay(DateTime.fromFormat(key, "yyyy-MM-dd", { zone: tz }).toUTC().toISO()!, tz)}</h2>
+            <h2 className="font-display text-2xl font-semibold">{key === "none" ? tr("No date") : relativeDay(DateTime.fromFormat(key, "yyyy-MM-dd", { zone: tz }).toUTC().toISO()!, tz)}</h2>
             <span className="text-sm text-muted">{key === "none" ? "" : fmt(DateTime.fromFormat(key, "yyyy-MM-dd", { zone: tz }).toUTC().toISO(), tz, "EEEE d MMMM")} · {items.length}</span>
           </div>
           <ul>
@@ -172,13 +173,13 @@ function Planner({ tasks, deadlines, tz }: { tasks: Task[]; deadlines: Task[]; t
         /* continue with the rest */
       }
     }
-    toast({ tone: "success", title: `Moved ${ok} task${ok === 1 ? "" : "s"}`, body: `to ${fmt(DateTime.fromFormat(dateStr, "yyyy-MM-dd", { zone: tz }).toUTC().toISO(), tz, "EEEE d MMMM")} — same times, reminders updated` });
+    toast({ tone: "success", title: tr("Moved {n} tasks", { n: ok }), body: tr("to {date} — same times, reminders updated", { date: fmt(DateTime.fromFormat(dateStr, "yyyy-MM-dd", { zone: tz }).toUTC().toISO(), tz, "EEEE d MMMM") }) });
     app.bumpData();
   }
 
   const dayOpts = [1, 2, 3, 7].map((n) => {
     const d = DateTime.now().setZone(tz).plus({ days: n });
-    return { date: d.toFormat("yyyy-MM-dd"), label: n === 1 ? "Tomorrow" : d.toFormat("cccc d MMM") };
+    return { date: d.toFormat("yyyy-MM-dd"), label: n === 1 ? tr("Tomorrow") : d.toFormat("cccc d MMM") };
   });
 
   return (
@@ -187,7 +188,7 @@ function Planner({ tasks, deadlines, tz }: { tasks: Task[]; deadlines: Task[]; t
         {pending.length === 0 && (
           <Rise>
             <Card className="p-4">
-              <EmptyState icon={<CircleCheck className="size-6" />} title={done.length ? "Everything for today is done" : "A clear day"} body={done.length ? "Beautifully done. Anything new can wait until tomorrow." : "Nothing scheduled. Add a task or get ahead on tomorrow."} action={<Button variant="gold" size="sm" onClick={() => app.openQuickAdd()}><Plus className="size-4" /> New task</Button>} />
+              <EmptyState icon={<CircleCheck className="size-6" />} title={done.length ? tr("Everything for today is done") : tr("A clear day")} body={done.length ? tr("Beautifully done. Anything new can wait until tomorrow.") : tr("Nothing scheduled. Add a task or get ahead on tomorrow.")} action={<Button variant="gold" size="sm" onClick={() => app.openQuickAdd()}><Plus className="size-4" />{" "}{tr("New task")}</Button>} />
             </Card>
           </Rise>
         )}
@@ -215,7 +216,7 @@ function Planner({ tasks, deadlines, tz }: { tasks: Task[]; deadlines: Task[]; t
         {deadlines.length > 0 && (
           <Rise>
             <Card className="p-4 sm:p-5">
-              <SectionTitle icon={<Hourglass className="size-4" />} title="Upcoming deadlines" sub="High priority in the next 7 days" />
+              <SectionTitle icon={<Hourglass className="size-4" />} title={tr("Upcoming deadlines")} sub="High priority in the next 7 days" />
               <ul className="-mx-2">
                 {deadlines.slice(0, 6).map((t) => (
                   <TaskRow key={t.id} task={t} />
@@ -228,7 +229,7 @@ function Planner({ tasks, deadlines, tz }: { tasks: Task[]; deadlines: Task[]; t
         {done.length > 0 && (
           <Rise>
             <Card className="p-4 sm:p-5">
-              <SectionTitle icon={<CheckCheck className="size-4" />} title="Completed today" sub={`${done.length} done`} />
+              <SectionTitle icon={<CheckCheck className="size-4" />} title={tr("Completed today")} sub={`${done.length} done`} />
               <ul className="-mx-2">
                 <AnimatePresence initial={false}>
                   {done.map((t) => (
@@ -250,16 +251,16 @@ function Planner({ tasks, deadlines, tz }: { tasks: Task[]; deadlines: Task[]; t
                   <span className="font-display text-2xl font-bold">{total ? Math.round((done.length / total) * 100) : 100}%</span>
                 </ProgressRing>
                 <div>
-                  <p className="font-display text-xl font-semibold">Daily summary</p>
-                  <p className="text-sm text-muted">{done.length} done · {pending.length} to go</p>
+                  <p className="font-display text-xl font-semibold">{tr("Daily summary")}</p>
+                  <p className="text-sm text-muted">{done.length}{" "}{tr("done ·")}{" "}{pending.length}{" "}{tr("to go")}</p>
                   {pending.some((t) => t.due_at && new Date(t.due_at) < now) && (
-                    <p className="mt-1 flex items-center gap-1 text-xs font-medium text-danger"><AlertTriangle className="size-3" /> {pending.filter((t) => t.due_at && new Date(t.due_at) < now).length} overdue</p>
+                    <p className="mt-1 flex items-center gap-1 text-xs font-medium text-danger"><AlertTriangle className="size-3" /> {pending.filter((t) => t.due_at && new Date(t.due_at) < now).length}{" "}{tr("overdue")}</p>
                   )}
                 </div>
               </div>
               <div className="mt-5 grid gap-2.5">
                 <Button variant="soft" onClick={() => setMoveOpen(true)} disabled={!pending.length}>
-                  <CalendarClock className="size-4" /> Move unfinished to…
+                  <CalendarClock className="size-4" />{" "}{tr("Move unfinished to…")}
                 </Button>
               </div>
             </Card>
@@ -269,11 +270,11 @@ function Planner({ tasks, deadlines, tz }: { tasks: Task[]; deadlines: Task[]; t
             <Rise>
               <Card className="overflow-hidden">
                 <div className="hero-navy p-5">
-                  <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold2"><Sparkles className="size-3.5" /> AI suggestion</p>
-                  <p className="mt-2 font-display text-xl font-semibold leading-snug">Not sure where to start?</p>
-                  <p className="mt-1 text-sm text-white/65">Claude suggests an order for today. Your tasks are never changed.</p>
+                  <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold2"><Sparkles className="size-3.5" />{" "}{tr("AI suggestion")}</p>
+                  <p className="mt-2 font-display text-xl font-semibold leading-snug">{tr("Not sure where to start?")}</p>
+                  <p className="mt-1 text-sm text-white/65">{tr("Claude suggests an order for today. Your tasks are never changed.")}</p>
                   <Button variant="gold" size="sm" className="mt-4" onClick={suggest} loading={planning} disabled={!pending.length}>
-                    <Wand2 className="size-4" /> Suggest priorities
+                    <Wand2 className="size-4" />{" "}{tr("Suggest priorities")}
                   </Button>
                 </div>
                 <AnimatePresence>
@@ -292,7 +293,7 @@ function Planner({ tasks, deadlines, tz }: { tasks: Task[]; deadlines: Task[]; t
                                   <motion.li key={o.task_id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07 }} className="flex gap-3">
                                     <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-navy">{i + 1}</span>
                                     <span className="min-w-0 text-sm">
-                                      <span className="block truncate font-medium">{t.title}</span>
+                                      <span className="block truncate font-medium">{tr(t.title)}</span>
                                       <span className="block text-xs text-muted">{o.reason}</span>
                                     </span>
                                   </motion.li>
@@ -311,11 +312,11 @@ function Planner({ tasks, deadlines, tz }: { tasks: Task[]; deadlines: Task[]; t
         </div>
       </aside>
 
-      <Modal open={moveOpen} onClose={() => setMoveOpen(false)} title="Move unfinished tasks" subtitle={`${pending.filter((t) => t.due_at).length} tasks keep their time of day; reminders are rebuilt.`} size="sm">
+      <Modal open={moveOpen} onClose={() => setMoveOpen(false)} title={tr("Move unfinished tasks")} subtitle={tr("{n} tasks keep their time of day; reminders are rebuilt.", { n: pending.filter((t) => t.due_at).length })} size="sm">
         <div className="grid gap-2">
           {dayOpts.map((d) => (
             <Button key={d.date} variant="outline" onClick={() => moveAll(d.date)} className="!justify-between">
-              {d.label} <ArrowRight className="size-4" />
+              {tr(d.label)} <ArrowRight className="size-4" />
             </Button>
           ))}
         </div>
@@ -345,15 +346,15 @@ function EmailsCard() {
   const shown = (flagged.length ? flagged : state.messages).slice(0, 3);
   return (
     <Card className="p-4 sm:p-5">
-      <SectionTitle icon={<Mail className="size-4" />} title="Emails requiring attention" sub={state.status === "ready" ? `${state.messages.length} unread · ${flagged.length} look actionable` : undefined} action={<Link href="/gmail" className="text-sm font-medium text-goldink hover:underline">Open Gmail</Link>} />
+      <SectionTitle icon={<Mail className="size-4" />} title={tr("Emails requiring attention")} sub={state.status === "ready" ? tr("{n} unread · {m} look actionable", { n: state.messages.length, m: flagged.length }) : undefined} action={<Link href="/gmail" className="text-sm font-medium text-goldink hover:underline">{tr("Open Gmail")}</Link>} />
       {state.status === "loading" && <div className="skeleton h-16" />}
       {state.status === "off" && (
         <p className="rounded-xl bg-surface2 p-4 text-sm text-muted">
-          Connect your business Gmail (read-only) to see unread client emails here. <Link href="/gmail" className="font-semibold text-goldink hover:underline">Connect Gmail</Link>
+          {tr("Connect your business Gmail (read-only) to see unread client emails here.")}{" "}<Link href="/gmail" className="font-semibold text-goldink hover:underline">{tr("Connect Gmail")}</Link>
         </p>
       )}
-      {state.status === "error" && <p className="rounded-xl bg-surface2 p-4 text-sm text-muted">{state.note ?? "Couldn't reach Gmail right now."}</p>}
-      {state.status === "ready" && shown.length === 0 && <p className="py-4 text-center text-sm text-muted">Inbox is clear — no unread emails.</p>}
+      {state.status === "error" && <p className="rounded-xl bg-surface2 p-4 text-sm text-muted">{state.note ?? tr("Couldn't reach Gmail right now.")}</p>}
+      {state.status === "ready" && shown.length === 0 && <p className="py-4 text-center text-sm text-muted">{tr("Inbox is clear — no unread emails.")}</p>}
       {state.status === "ready" && (
         <ul className="space-y-1">
           {shown.map((m) => (
@@ -364,7 +365,7 @@ function EmailsCard() {
                   <span className="block truncate text-sm font-medium">{m.subject}</span>
                   <span className="block truncate text-xs text-muted">{m.fromName}</span>
                 </span>
-                {m.needs_action && <Chip tone="warning">Action</Chip>}
+                {m.needs_action && <Chip tone="warning">{tr("Action")}</Chip>}
               </Link>
             </li>
           ))}

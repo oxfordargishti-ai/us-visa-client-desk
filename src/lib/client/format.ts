@@ -1,20 +1,21 @@
 import { DateTime } from "luxon";
+import { dateLocale, tr } from "../i18n";
 
 export const fmt = (iso: string | null | undefined, tz: string, f = "EEE d MMM · HH:mm") => {
   if (!iso) return "—";
-  const d = DateTime.fromISO(iso, { zone: "utc" }).setZone(tz);
+  const d = DateTime.fromISO(iso, { zone: "utc" }).setZone(tz).setLocale(dateLocale());
   return d.isValid ? d.toFormat(f) : "—";
 };
 
 export const timeOnly = (iso: string | null | undefined, tz: string) => fmt(iso, tz, "HH:mm");
 
 export function relativeDay(iso: string, tz: string, now = new Date()): string {
-  const d = DateTime.fromISO(iso, { zone: "utc" }).setZone(tz).startOf("day");
+  const d = DateTime.fromISO(iso, { zone: "utc" }).setZone(tz).setLocale(dateLocale()).startOf("day");
   const n = DateTime.fromJSDate(now).setZone(tz).startOf("day");
   const diff = Math.round(d.diff(n, "days").days);
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Tomorrow";
-  if (diff === -1) return "Yesterday";
+  if (diff === 0) return tr("Today");
+  if (diff === 1) return tr("Tomorrow");
+  if (diff === -1) return tr("Yesterday");
   if (diff > 1 && diff < 7) return d.toFormat("cccc");
   return d.toFormat("d MMM");
 }
@@ -22,11 +23,11 @@ export function relativeDay(iso: string, tz: string, now = new Date()): string {
 export function ago(iso: string | null | undefined, now = new Date()): string {
   if (!iso) return "";
   const s = Math.max(0, (now.getTime() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return "just now";
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
-  if (s < 86400 * 7) return `${Math.floor(s / 86400)} d ago`;
-  return DateTime.fromISO(iso).toFormat("d MMM yyyy");
+  if (s < 60) return tr("just now");
+  if (s < 3600) return tr("{n} min ago", { n: Math.floor(s / 60) });
+  if (s < 86400) return tr("{n} h ago", { n: Math.floor(s / 3600) });
+  if (s < 86400 * 7) return tr("{n} d ago", { n: Math.floor(s / 86400) });
+  return DateTime.fromISO(iso).setLocale(dateLocale()).toFormat("d MMM yyyy");
 }
 
 export function initials(name: string): string {

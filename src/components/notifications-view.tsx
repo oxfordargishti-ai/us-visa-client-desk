@@ -10,6 +10,7 @@ import { api, ApiError } from "@/lib/client/api";
 import { ago, fmt } from "@/lib/client/format";
 import { deviceLabel, disablePush, enablePush, getPushState, playChime, useInstall, type PushState } from "@/lib/client/hooks";
 import type { NotificationRow } from "@/lib/types";
+import { tr } from "@/lib/i18n";
 
 interface Payload {
   notifications: NotificationRow[];
@@ -49,10 +50,10 @@ export function NotificationsView() {
     setBusy(true);
     try {
       await enablePush(app.vapidKey, deviceLabel());
-      toast({ tone: "success", title: "Alerts are on", body: "This device will now get reminders even when the app is closed." });
+      toast({ tone: "success", title: tr("Alerts are on"), body: tr("This device will now get reminders even when the app is closed.") });
       await load();
     } catch (e) {
-      toast({ tone: "error", title: "Couldn't turn on alerts", body: e instanceof Error ? e.message : undefined });
+      toast({ tone: "error", title: tr("Couldn't turn on alerts"), body: e instanceof Error ? e.message : undefined });
       setPush(await getPushState());
     } finally {
       setBusy(false);
@@ -60,7 +61,7 @@ export function NotificationsView() {
   }
   async function turnOff() {
     await disablePush();
-    toast({ tone: "info", title: "Alerts turned off for this device" });
+    toast({ tone: "info", title: tr("Alerts turned off for this device") });
     load();
   }
   async function test() {
@@ -72,7 +73,7 @@ export function NotificationsView() {
       app.refreshUnread();
       load();
     } catch (e) {
-      toast({ tone: "error", title: "Test failed", body: e instanceof ApiError ? e.message : undefined });
+      toast({ tone: "error", title: tr("Test failed"), body: e instanceof ApiError ? e.message : undefined });
     } finally {
       setBusy(false);
     }
@@ -83,9 +84,9 @@ export function NotificationsView() {
     setEmailBusy(true);
     try {
       const r = await api<{ ok: boolean; to: string }>("/api/notifications/test-email", { body: {} });
-      toast({ tone: "success", title: "Test email sent", body: `Check the inbox of ${r.to} (and the spam folder).` });
+      toast({ tone: "success", title: tr("Test email sent"), body: tr("Check the inbox of {to} (and the spam folder).", { to: r.to }) });
     } catch (e) {
-      toast({ tone: "error", title: "Test email failed", body: e instanceof ApiError ? e.message : undefined });
+      toast({ tone: "error", title: tr("Test email failed"), body: e instanceof ApiError ? e.message : undefined });
     } finally {
       setEmailBusy(false);
     }
@@ -99,11 +100,11 @@ export function NotificationsView() {
     <Stagger className="space-y-6">
       <Rise className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink">Reminder centre</p>
-          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">Notifications</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink">{tr("Reminder centre")}</p>
+          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">{tr("Notifications")}</h1>
         </div>
         {inbox.some((n) => !n.read_at) && (
-          <Button variant="outline" onClick={async () => { await api("/api/notifications/read", { body: { all: true } }); app.refreshUnread(); load(); }}><CheckCheck className="size-4" /> Mark all read</Button>
+          <Button variant="outline" onClick={async () => { await api("/api/notifications/read", { body: { all: true } }); app.refreshUnread(); load(); }}><CheckCheck className="size-4" />{" "}{tr("Mark all read")}</Button>
         )}
       </Rise>
 
@@ -120,37 +121,37 @@ export function NotificationsView() {
                   </span>
                   <div className="min-w-0">
                     <h2 className="font-display text-2xl font-semibold leading-tight">
-                      {!pushConfigured ? "Push alerts need server setup" : push === "subscribed" ? "Alerts are on for this device" : push === "denied" ? "Alerts are blocked" : push === "needs-install" ? "Install the app to get alerts" : push === "unsupported" ? "Background alerts aren't supported here" : "Turn on reminder alerts"}
+                      {!pushConfigured ? tr("Push alerts need server setup") : push === "subscribed" ? tr("Alerts are on for this device") : push === "denied" ? tr("Alerts are blocked") : push === "needs-install" ? tr("Install the app to get alerts") : push === "unsupported" ? tr("Background alerts aren't supported here") : tr("Turn on reminder alerts")}
                     </h2>
                     <p className="mt-1 text-sm text-white/70">
-                      {!pushConfigured ? "The server's push keys aren't set yet — see the setup guide. In-app and email reminders still work." :
-                        push === "subscribed" ? "Reminders arrive even when this app is closed." :
-                        push === "denied" ? "Allow notifications for this site in your browser or phone settings, then reload." :
-                        push === "needs-install" ? "On iPhone and iPad, alerts only work from the installed app. Follow the steps below." :
-                        push === "unsupported" ? "You'll still see reminders here and get an email fallback." :
-                        "Get a tap on the shoulder before every interview and call."}
+                      {!pushConfigured ? tr("The server's push keys aren't set yet — see the setup guide. In-app and email reminders still work.") :
+                        push === "subscribed" ? tr("Reminders arrive even when this app is closed.") :
+                        push === "denied" ? tr("Allow notifications for this site in your browser or phone settings, then reload.") :
+                        push === "needs-install" ? tr("On iPhone and iPad, alerts only work from the installed app. Follow the steps below.") :
+                        push === "unsupported" ? tr("You'll still see reminders here and get an email fallback.") :
+                        tr("Get a tap on the shoulder before every interview and call.")}
                     </p>
                   </div>
                 </div>
                 <div className="relative mt-5 flex flex-wrap gap-2.5">
-                  {pushConfigured && (push === "default" || push === "granted-unsubscribed") && <Button variant="gold" onClick={turnOn} loading={busy}><BellRing className="size-4" /> Turn on alerts</Button>}
+                  {pushConfigured && (push === "default" || push === "granted-unsubscribed") && <Button variant="gold" onClick={turnOn} loading={busy}><BellRing className="size-4" />{" "}{tr("Turn on alerts")}</Button>}
                   {push === "subscribed" && (
                     <>
-                      <Button variant="gold" onClick={test} loading={busy}><Send className="size-4" /> Send test notification</Button>
-                      <Button variant="outline" className="!border-white/25 !bg-white/10 !text-white hover:!bg-white/20" onClick={turnOff}>Turn off</Button>
+                      <Button variant="gold" onClick={test} loading={busy}><Send className="size-4" />{" "}{tr("Send test notification")}</Button>
+                      <Button variant="outline" className="!border-white/25 !bg-white/10 !text-white hover:!bg-white/20" onClick={turnOff}>{tr("Turn off")}</Button>
                     </>
                   )}
-                  {(!pushConfigured || push === "unsupported" || push === "needs-install" || push === "denied") && <Button variant="gold" onClick={test} loading={busy}><Send className="size-4" /> Send in-app test</Button>}
-                  {app.caps.email && <Button variant="outline" className="!border-white/25 !bg-white/10 !text-white hover:!bg-white/20" onClick={testEmail} loading={emailBusy}><Mail className="size-4" /> Send test email</Button>}
+                  {(!pushConfigured || push === "unsupported" || push === "needs-install" || push === "denied") && <Button variant="gold" onClick={test} loading={busy}><Send className="size-4" />{" "}{tr("Send in-app test")}</Button>}
+                  {app.caps.email && <Button variant="outline" className="!border-white/25 !bg-white/10 !text-white hover:!bg-white/20" onClick={testEmail} loading={emailBusy}><Mail className="size-4" />{" "}{tr("Send test email")}</Button>}
                 </div>
               </div>
               <AnimatePresence>
                 {testRes && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                     <div className="space-y-2 p-5 text-sm">
-                      <p className="flex items-center gap-2 font-semibold"><CircleCheck className="size-4 text-success" /> In-app test added to your inbox</p>
-                      {!testRes.configured && <p className="text-muted">Push isn't configured on the server, so no device was contacted.</p>}
-                      {testRes.configured && testRes.devices === 0 && <p className="text-muted">No device is subscribed yet — turn on alerts on a device first.</p>}
+                      <p className="flex items-center gap-2 font-semibold"><CircleCheck className="size-4 text-success" />{" "}{tr("In-app test added to your inbox")}</p>
+                      {!testRes.configured && <p className="text-muted">{tr("Push isn't configured on the server, so no device was contacted.")}</p>}
+                      {testRes.configured && testRes.devices === 0 && <p className="text-muted">{tr("No device is subscribed yet — turn on alerts on a device first.")}</p>}
                       {testRes.results.map((r, i) => (
                         <p key={i} className="flex items-start gap-2">
                           <Chip tone={r.status === "sent" ? "success" : r.status === "expired" ? "warning" : "danger"}>{r.status}</Chip>
@@ -167,10 +168,10 @@ export function NotificationsView() {
           {/* install + iOS guide */}
           <Rise>
             <Card className="p-5" id="install">
-              <SectionTitle icon={<Smartphone className="size-4" />} title="Install on your phone or computer" sub={install.installed ? "Installed — you're using the app" : "Gets you an app icon and reliable alerts"} />
-              {!install.installed && install.canInstall && <Button variant="gold" onClick={install.install}><Download className="size-4" /> Install app</Button>}
+              <SectionTitle icon={<Smartphone className="size-4" />} title={tr("Install on your phone or computer")} sub={install.installed ? tr("Installed — you're using the app") : tr("Gets you an app icon and reliable alerts")} />
+              {!install.installed && install.canInstall && <Button variant="gold" onClick={install.install}><Download className="size-4" />{" "}{tr("Install app")}</Button>}
               <details className="group mt-3 rounded-2xl bg-surface2/70 p-4 open:ring-1 open:ring-gold/40" open={install.ios && !install.installed}>
-                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">iPhone &amp; iPad (Safari) <span className="text-xs font-medium text-muted group-open:hidden">Show steps</span></summary>
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">{tr("iPhone & iPad (Safari)")}{" "}<span className="text-xs font-medium text-muted group-open:hidden">{tr("Show steps")}</span></summary>
                 <ol className="mt-3 space-y-3 text-sm">
                   {[
                     [Share, "Open this site in Safari and tap the Share button."],
@@ -179,28 +180,28 @@ export function NotificationsView() {
                     [BellRing, "Come back to this page and tap “Turn on alerts”, then Allow."],
                   ].map(([I, t], i) => {
                     const Icon = I as typeof Share;
-                    return <li key={i} className="flex items-start gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-navy">{i + 1}</span><span className="pt-0.5">{t as string}</span><Icon className="ml-auto size-4 shrink-0 text-muted" /></li>;
+                    return <li key={i} className="flex items-start gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-navy">{i + 1}</span><span className="pt-0.5">{tr(t as string)}</span><Icon className="ml-auto size-4 shrink-0 text-muted" /></li>;
                   })}
                 </ol>
-                <p className="mt-3 flex gap-2 text-xs text-muted"><Info className="mt-0.5 size-3.5 shrink-0" /> Requires iOS/iPadOS 16.4 or newer. Apple only allows web alerts for apps added to the Home Screen.</p>
+                <p className="mt-3 flex gap-2 text-xs text-muted"><Info className="mt-0.5 size-3.5 shrink-0" />{" "}{tr("Requires iOS/iPadOS 16.4 or newer. Apple only allows web alerts for apps added to the Home Screen.")}</p>
               </details>
               <details className="group mt-2 rounded-2xl bg-surface2/70 p-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">Android &amp; desktop (Chrome / Edge) <span className="text-xs font-medium text-muted group-open:hidden">Show steps</span></summary>
-                <p className="mt-3 text-sm">Use the browser menu → <b>Install app</b> (or the Install button above). Then tap <b>Turn on alerts</b> and allow notifications. Alerts also work in a normal browser tab.</p>
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">{tr("Android & desktop (Chrome / Edge)")}{" "}<span className="text-xs font-medium text-muted group-open:hidden">{tr("Show steps")}</span></summary>
+                <p className="mt-3 text-sm">{tr("Use the browser menu →")}{" "}<b>{tr("Install app")}</b>{" "}{tr("(or the Install button above). Then tap")}{" "}<b>{tr("Turn on alerts")}</b>{" "}{tr("and allow notifications. Alerts also work in a normal browser tab.")}</p>
               </details>
-              <p className="mt-3 flex items-start gap-2 text-xs text-muted"><Volume2 className="mt-0.5 size-3.5 shrink-0" /> Sound: while the app is open you'll hear a soft chime. For background alerts your phone or computer's own notification sound is used — web apps can't set a custom one.</p>
+              <p className="mt-3 flex items-start gap-2 text-xs text-muted"><Volume2 className="mt-0.5 size-3.5 shrink-0" />{" "}{tr("Sound: while the app is open you'll hear a soft chime. For background alerts your phone or computer's own notification sound is used — web apps can't set a custom one.")}</p>
             </Card>
           </Rise>
 
           <Rise>
             <Card className="p-5">
-              <SectionTitle icon={<MonitorSmartphone className="size-4" />} title="Your devices" />
-              {!data ? <Skeleton className="h-16" /> : data.devices.length === 0 ? <p className="rounded-xl bg-surface2 p-4 text-sm text-muted">No device is subscribed yet.</p> : (
+              <SectionTitle icon={<MonitorSmartphone className="size-4" />} title={tr("Your devices")} />
+              {!data ? <Skeleton className="h-16" /> : data.devices.length === 0 ? <p className="rounded-xl bg-surface2 p-4 text-sm text-muted">{tr("No device is subscribed yet.")}</p> : (
                 <ul className="space-y-2">
                   {data.devices.map((d) => (
                     <li key={d.id} className="flex items-center gap-3 rounded-xl bg-surface2/70 p-3">
                       <Smartphone className="size-5 text-goldink" />
-                      <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{d.device_label || d.user_agent?.slice(0, 40) || "Device"}</p><p className="text-xs text-muted">{d.status === "expired" ? "Expired — turn alerts on again on that device" : d.last_success_at ? `Last alert ${ago(d.last_success_at)}` : `Added ${ago(d.created_at)}`}</p></div>
+                      <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{d.device_label || d.user_agent?.slice(0, 40) || tr("Device")}</p><p className="text-xs text-muted">{d.status === "expired" ? tr("Expired — turn alerts on again on that device") : d.last_success_at ? tr("Last alert {when}", { when: ago(d.last_success_at) }) : `Added ${ago(d.created_at)}`}</p></div>
                       <Chip tone={d.status === "active" ? "success" : "warning"}>{d.status}</Chip>
                     </li>
                   ))}
@@ -212,12 +213,12 @@ export function NotificationsView() {
 
         <div className="space-y-4 lg:col-span-7">
           <Rise>
-            <Segmented<typeof tab> id="notif-tab" value={tab} onChange={setTab} options={[{ value: "inbox", label: <>Inbox{data && data.unread > 0 && <span className="ml-1.5 rounded-full bg-gold px-1.5 text-xs font-bold text-navy">{data.unread}</span>}</> }, { value: "scheduled", label: "Scheduled" }, { value: "log", label: "Delivery log" }]} />
+            <Segmented<typeof tab> id="notif-tab" value={tab} onChange={setTab} options={[{ value: "inbox", label: <>{tr("Inbox")}{data && data.unread > 0 && <span className="ml-1.5 rounded-full bg-gold px-1.5 text-xs font-bold text-navy">{data.unread}</span>}</> }, { value: "scheduled", label: "Scheduled" }, { value: "log", label: "Delivery log" }]} />
           </Rise>
           <Rise>
             <Card className="p-2 sm:p-3">
               {!data && <div className="space-y-2 p-2"><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /></div>}
-              {data && tab === "inbox" && (inbox.length === 0 ? <EmptyState icon={<Bell className="size-6" />} title="No notifications yet" body="Reminders appear here when they fire, even if you missed the push." /> : (
+              {data && tab === "inbox" && (inbox.length === 0 ? <EmptyState icon={<Bell className="size-6" />} title={tr("No notifications yet")} body={tr("Reminders appear here when they fire, even if you missed the push.")} /> : (
                 <ul>
                   <AnimatePresence initial={false}>
                     {inbox.map((n) => (
@@ -228,25 +229,25 @@ export function NotificationsView() {
                           <p className="mt-0.5 text-xs text-muted">{ago(n.created_at)}</p>
                         </button>
                         {n.url?.startsWith("/tasks?open=") && (
-                          <Button size="sm" variant="soft" onClick={async () => { await api(`/api/tasks/${n.url!.split("=")[1]}/snooze`, { body: { minutes: 15 } }); toast({ tone: "info", title: "Snoozed 15 minutes" }); }}><Clock className="size-3.5" /> 15 min</Button>
+                          <Button size="sm" variant="soft" onClick={async () => { await api(`/api/tasks/${n.url!.split("=")[1]}/snooze`, { body: { minutes: 15 } }); toast({ tone: "info", title: tr("Snoozed 15 minutes") }); }}><Clock className="size-3.5" />{" "}{tr("15 min")}</Button>
                         )}
                       </motion.li>
                     ))}
                   </AnimatePresence>
                 </ul>
               ))}
-              {data && tab === "scheduled" && (data.upcoming.length === 0 ? <EmptyState icon={<Clock className="size-6" />} title="Nothing scheduled" body="Reminders for your open tasks and interviews are listed here before they fire." /> : (
+              {data && tab === "scheduled" && (data.upcoming.length === 0 ? <EmptyState icon={<Clock className="size-6" />} title={tr("Nothing scheduled")} body={tr("Reminders for your open tasks and interviews are listed here before they fire.")} /> : (
                 <ul>
                   {data.upcoming.map((r) => (
                     <li key={r.id} className="flex items-center gap-3 rounded-2xl p-3.5">
                       <span className="grid size-10 place-items-center rounded-xl bg-gold/15 text-goldink"><Clock className="size-5" /></span>
-                      <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{r.title}</p><p className="text-xs text-muted tabular">{fmt(r.remind_at, app.tz, "EEE d MMM · HH:mm")}{r.last_error && ` · ${r.last_error}`}</p></div>
-                      <Chip tone={r.status === "failed" ? "danger" : r.attempt_count > 0 ? "warning" : "gold"}>{r.status === "pending" ? (r.attempt_count > 0 ? `retry ${r.attempt_count}` : "scheduled") : r.status}</Chip>
+                      <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{tr(r.title)}</p><p className="text-xs text-muted tabular">{fmt(r.remind_at, app.tz, "EEE d MMM · HH:mm")}{r.last_error && ` · ${r.last_error}`}</p></div>
+                      <Chip tone={r.status === "failed" ? "danger" : r.attempt_count > 0 ? "warning" : "gold"}>{r.status === "pending" ? (r.attempt_count > 0 ? `retry ${r.attempt_count}` : tr("scheduled")) : r.status}</Chip>
                     </li>
                   ))}
                 </ul>
               ))}
-              {data && tab === "log" && (log.length === 0 ? <EmptyState icon={<Send className="size-6" />} title="No deliveries yet" body="Every push, email and in-app delivery is recorded here with its outcome." /> : (
+              {data && tab === "log" && (log.length === 0 ? <EmptyState icon={<Send className="size-6" />} title={tr("No deliveries yet")} body={tr("Every push, email and in-app delivery is recorded here with its outcome.")} /> : (
                 <ul>
                   {log.map((n) => {
                     const Icon = CH_ICON[n.channel];
@@ -255,7 +256,7 @@ export function NotificationsView() {
                         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface2 text-goldink"><Icon className="size-5" /></span>
                         <div className="min-w-0 flex-1">
                           <p className="line-clamp-2 text-sm font-medium">{n.body}</p>
-                          <p className="text-xs text-muted">{n.channel === "inapp" ? "In-app" : n.channel === "push" ? "Push" : "Email"} · {ago(n.created_at)}</p>
+                          <p className="text-xs text-muted">{n.channel === "inapp" ? tr("In-app") : n.channel === "push" ? tr("Push") : tr("Email")} · {ago(n.created_at)}</p>
                           {n.error && <p className="mt-1 flex items-start gap-1.5 text-xs font-medium text-[#8a5f10] dark:text-[#f0c36d]"><AlertTriangle className="mt-0.5 size-3 shrink-0" /> {n.error}</p>}
                         </div>
                         <Chip tone={STATUS_TONE[n.status as keyof typeof STATUS_TONE] ?? "neutral"}>{n.status}</Chip>

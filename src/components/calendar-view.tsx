@@ -3,6 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import FullCalendar from "@fullcalendar/react";
+import hyLocale from "@fullcalendar/core/locales/hy-am";
+import ruLocale from "@fullcalendar/core/locales/ru";
+import { getLang } from "@/lib/i18n";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
@@ -18,6 +21,7 @@ import { api, ApiError } from "@/lib/client/api";
 import { CATEGORY_COLORS, TASK_CATEGORIES, type TaskCategory } from "@/lib/constants";
 import type { CalendarEventRow } from "@/lib/types";
 import { DateTime } from "luxon";
+import { tr } from "@/lib/i18n";
 
 type Mode = "day" | "week" | "month" | "agenda" | "interviews";
 const VIEW: Record<Mode, string> = { day: "timeGridDay", week: "timeGridWeek", month: "dayGridMonth", agenda: "listWeek", interviews: "listMonth" };
@@ -82,7 +86,7 @@ export function CalendarView({ initialDate }: { initialDate?: string }) {
         ok(evs);
       } catch (e) {
         fail(e as Error);
-        toast({ tone: "error", title: "Couldn't load the calendar", body: e instanceof ApiError ? e.message : undefined });
+        toast({ tone: "error", title: tr("Couldn't load the calendar"), body: e instanceof ApiError ? e.message : undefined });
       }
     },
     [toast],
@@ -93,11 +97,11 @@ export function CalendarView({ initialDate }: { initialDate?: string }) {
   const move = async (info: { event: { id: string; startStr: string; endStr: string }; revert: () => void }) => {
     try {
       const r = await api<{ reminders: unknown[] }>(`/api/calendar/events/${info.event.id}`, { method: "PATCH", body: { starts_at: new Date(info.event.startStr).toISOString(), ends_at: info.event.endStr ? new Date(info.event.endStr).toISOString() : undefined } });
-      toast({ tone: "success", title: "Rescheduled", body: `${DateTime.fromISO(info.event.startStr, { setZone: true }).setZone(app.tz).toFormat("EEE d MMM · HH:mm")} — ${r.reminders.length} reminder${r.reminders.length === 1 ? "" : "s"} updated` });
+      toast({ tone: "success", title: tr("Rescheduled"), body: `${DateTime.fromISO(info.event.startStr, { setZone: true }).setZone(app.tz).toFormat("EEE d MMM · HH:mm")} — ${tr("{n} reminders updated", { n: r.reminders.length })}` });
       app.bumpData();
     } catch (e) {
       info.revert();
-      toast({ tone: "error", title: "Couldn't move it", body: e instanceof ApiError ? e.message : undefined });
+      toast({ tone: "error", title: tr("Couldn't move it"), body: e instanceof ApiError ? e.message : undefined });
     }
   };
 
@@ -127,7 +131,7 @@ export function CalendarView({ initialDate }: { initialDate?: string }) {
       <div className="flex min-w-0 items-start gap-1 overflow-hidden px-1 py-0.5 leading-tight">
         {!isMonth && p.status === "pending" && (
           <button
-            aria-label="Mark complete"
+            aria-label={tr("Mark complete")}
             onClick={(e) => {
               e.stopPropagation();
               actions.complete({ id: p.taskId, title: arg.event.title });
@@ -153,12 +157,12 @@ export function CalendarView({ initialDate }: { initialDate?: string }) {
     <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink">Smart calendar</p>
-          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">Calendar</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink">{tr("Smart calendar")}</p>
+          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">{tr("Calendar")}</h1>
         </div>
         <div className="hidden sm:block">
           <Button variant="gold" size="lg" onClick={() => app.openQuickAdd()}>
-            <Sparkles className="size-4" /> New task
+            <Sparkles className="size-4" />{" "}{tr("New task")}
           </Button>
         </div>
       </div>
@@ -166,14 +170,14 @@ export function CalendarView({ initialDate }: { initialDate?: string }) {
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-line p-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
-            <IconButton label="Previous" onClick={() => api_()?.prev()}>
+            <IconButton label={tr("Previous")} onClick={() => api_()?.prev()}>
               <ChevronLeft className="size-5" />
             </IconButton>
-            <IconButton label="Next" onClick={() => api_()?.next()}>
+            <IconButton label={tr("Next")} onClick={() => api_()?.next()}>
               <ChevronRight className="size-5" />
             </IconButton>
             <Button variant="soft" size="sm" onClick={() => api_()?.today()}>
-              Today
+              {tr("Today")}
             </Button>
             <div className="relative ml-2 h-9 min-w-[13rem] flex-1 overflow-hidden md:flex-none md:min-w-[17rem]">
               <AnimatePresence mode="popLayout" initial={false}>
@@ -194,20 +198,20 @@ export function CalendarView({ initialDate }: { initialDate?: string }) {
                   { value: "week", label: "Week" },
                   { value: "month", label: "Month" },
                   { value: "agenda", label: "Agenda" },
-                  { value: "interviews", label: <span className="flex items-center gap-1.5"><Landmark className="size-3.5" /> Interviews</span> },
+                  { value: "interviews", label: <span className="flex items-center gap-1.5"><Landmark className="size-3.5" />{" "}{tr("Interviews")}</span> },
                 ]}
               />
             )}
           </div>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto border-b border-line px-4 py-2.5" aria-label="Filter by category">
+        <div className="flex gap-2 overflow-x-auto border-b border-line px-4 py-2.5" aria-label={tr("Filter by category")}>
           {TASK_CATEGORIES.map((c) => {
             const off = hidden.has(c);
             return (
               <button key={c} onClick={() => toggleCat(c)} aria-pressed={!off} className={cn("flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 transition", off ? "bg-transparent text-muted/60 ring-line line-through" : "bg-surface2 text-ink ring-line hover:ring-gold/60")}>
                 <span className="size-2.5 rounded-full" style={{ background: off ? "transparent" : CATEGORY_COLORS[c], border: `1.5px solid ${CATEGORY_COLORS[c]}` }} />
-                {c}
+                {tr(c)}
               </button>
             );
           })}
@@ -219,6 +223,8 @@ export function CalendarView({ initialDate }: { initialDate?: string }) {
               ref={ref}
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin, luxon3Plugin]}
               timeZone={app.tz}
+              locales={[hyLocale, ruLocale]}
+              locale={getLang() === "hy" ? "hy-am" : getLang() === "ru" ? "ru" : "en-gb"}
               initialView={VIEW[mode]}
               initialDate={initialDate}
               headerToolbar={false}
@@ -255,9 +261,9 @@ export function CalendarView({ initialDate }: { initialDate?: string }) {
               }}
               noEventsContent={() => (
                 <div className="py-10 text-center text-sm text-muted">
-                  Nothing scheduled here.{" "}
+                  {tr("Nothing scheduled here.")}{" "}
                   <button className="font-semibold text-goldink hover:underline" onClick={() => app.openQuickAdd()}>
-                    Add a task
+                    {tr("Add a task")}
                   </button>
                 </div>
               )}
@@ -266,7 +272,7 @@ export function CalendarView({ initialDate }: { initialDate?: string }) {
         </div>
       </Card>
       <p className="flex items-center gap-2 text-xs text-muted">
-        <Plus className="size-3.5" /> Tap an empty slot to add a task · drag to reschedule (reminders follow automatically) · {count ?? "…"} item{count === 1 ? "" : "s"} in view · times shown in {app.tz}
+        <Plus className="size-3.5" />{" "}{tr("Tap an empty slot to add a task · drag to reschedule (reminders follow automatically)")}{" · "}{tr("{n} items in view", { n: count ?? "…" })}{" · "}{tr("times shown in {tz}", { tz: app.tz })}
       </p>
     </div>
   );

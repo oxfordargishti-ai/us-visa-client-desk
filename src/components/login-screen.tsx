@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Eye, EyeOff, ShieldCheck, CalendarClock, BellRing, FolderLock, Sparkles, ArrowRight, Check } from "lucide-react";
 import { Button, Disclaimer, EASE, Field, Input, Logo } from "./ui";
 import { api, ApiError } from "@/lib/client/api";
+import { tr } from "@/lib/i18n";
 
 // Deterministic "random" so server and client render identical particles.
 const rand = (i: number, k: number) => {
@@ -36,7 +37,7 @@ export function LoginScreen({ next, error, googleEnabled }: { next: string; erro
   const [show, setShow] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [done, setDone] = React.useState(false);
-  const [err, setErr] = React.useState<string | null>(error ? ERRORS[error] ?? null : null);
+  const [err, setErr] = React.useState<string | null>(error ? (ERRORS[error] ? tr(ERRORS[error]) : null) : null);
   const [shake, setShake] = React.useState(0);
 
   async function submit(e: React.FormEvent) {
@@ -48,7 +49,7 @@ export function LoginScreen({ next, error, googleEnabled }: { next: string; erro
       setDone(true);
       setTimeout(() => router.replace(next), 900);
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Couldn't sign in. Please try again.");
+      setErr(e instanceof ApiError ? e.message : tr("Couldn't sign in. Please try again."));
       setShake((s) => s + 1);
       setBusy(false);
     }
@@ -71,22 +72,22 @@ export function LoginScreen({ next, error, googleEnabled }: { next: string; erro
         {/* brand side */}
         <motion.section initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12 } } }} className="order-2 text-white lg:order-1">
           <motion.p variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="mb-4 hidden text-xs font-semibold uppercase tracking-[0.28em] text-gold2 lg:block">
-            Private client desk
+            {tr("Private client desk")}
           </motion.p>
           <motion.h1 variants={{ hidden: { opacity: 0, y: 24, filter: "blur(8px)" }, show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.8, ease: EASE } } }} className="font-display text-[2.6rem] font-semibold leading-[1.02] sm:text-6xl lg:text-7xl">
-            Your Legal Bridge
+            {tr("Your Legal Bridge")}
             <br />
-            <span className="gold-text animate-[goldpan_6s_linear_infinite]">to the U.S.</span>
+            <span className="gold-text animate-[goldpan_6s_linear_infinite]">{tr("to the U.S.")}</span>
           </motion.h1>
           <motion.p variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="mt-5 max-w-lg text-lg text-white/70">
-            Every client, interview, deadline and document — calm, organised and never forgotten.
+            {tr("Every client, interview, deadline and document — calm, organised and never forgotten.")}
           </motion.p>
           <ul className="mt-8 hidden gap-3 sm:grid sm:grid-cols-2">
             {FEATURES.map((f) => (
               <motion.li key={f.t} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className="glass rounded-2xl p-4 text-white" style={{ background: "rgba(255,255,255,0.05)", borderColor: "rgba(201,168,106,0.2)" }}>
                 <f.icon className="mb-2 size-5 text-gold2" aria-hidden />
-                <p className="text-sm font-semibold">{f.t}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-white/60">{f.d}</p>
+                <p className="text-sm font-semibold">{tr(f.t)}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-white/60">{tr(f.d)}</p>
               </motion.li>
             ))}
           </ul>
@@ -110,17 +111,17 @@ export function LoginScreen({ next, error, googleEnabled }: { next: string; erro
               transition={{ duration: 0.45 }}
               className="relative rounded-[28px] bg-white/95 px-6 pb-6 pt-8 text-navy shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] ring-1 ring-white/40 backdrop-blur-xl sm:px-8"
             >
-              <h2 className="text-center font-display text-3xl font-semibold">Welcome back</h2>
-              <p className="mt-1 text-center text-sm text-[#566074]">Sign in to your command center</p>
+              <h2 className="text-center font-display text-3xl font-semibold">{tr("Welcome back")}</h2>
+              <p className="mt-1 text-center text-sm text-[#566074]">{tr("Sign in to your command center")}</p>
 
               <div className="mt-6 space-y-4 [&_label>span:first-child]:!text-navy/80 [&_input]:!bg-white [&_input]:!text-navy">
-                <Field label="Email">
-                  <Input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@usvisawithargishti.com" data-autofocus />
+                <Field label={tr("Email")}>
+                  <Input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tr("you@usvisawithargishti.com")} data-autofocus />
                 </Field>
-                <Field label="Password">
+                <Field label={tr("Password")}>
                   <div className="relative">
                     <Input type={show ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pr-12" placeholder="••••••••••" />
-                    <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-[#566074] hover:bg-black/5">
+                    <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? tr("Hide password") : tr("Show password")} className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-[#566074] hover:bg-black/5">
                       {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
@@ -139,11 +140,11 @@ export function LoginScreen({ next, error, googleEnabled }: { next: string; erro
                 <AnimatePresence mode="wait" initial={false}>
                   {done ? (
                     <motion.span key="ok" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-2 text-gold2">
-                      <Check className="size-5" /> Welcome
+                      <Check className="size-5" />{" "}{tr("Welcome")}
                     </motion.span>
                   ) : (
                     <motion.span key="go" exit={{ opacity: 0 }} className="flex items-center gap-2">
-                      Sign in <ArrowRight className="size-4" />
+                      {tr("Sign in")}{" "}<ArrowRight className="size-4" />
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -157,7 +158,7 @@ export function LoginScreen({ next, error, googleEnabled }: { next: string; erro
                     <path fill="#FBBC05" d="M5.6 14.7a7.2 7.2 0 0 1 0-4.6v-3H1.8a12 12 0 0 0 0 10.6l3.8-3z" />
                     <path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3A11.5 11.5 0 0 0 12 0C7.5 0 3.700 2.400 1.800 6.100l3.800 3C6.500 6.800 9 4.800 12 4.800z" />
                   </svg>
-                  Continue with Google
+                  {tr("Continue with Google")}
                 </a>
               )}
 

@@ -14,12 +14,13 @@ import { reschedulePresets, reminderLabel } from "@/lib/time";
 import type { Reminder, Task } from "@/lib/types";
 import { TaskForm, WarningList, type ClientOption } from "./task-form";
 import { draftFromTask, draftProblems, draftToPayload, type Draft } from "@/lib/client/task-draft";
+import { tr } from "@/lib/i18n";
 
 /* ───────────────────────── actions ───────────────────────── */
 export function useTaskActions() {
   const app = useApp();
   const toast = useToast();
-  const fail = (e: unknown) => toast({ tone: "error", title: "That didn't work", body: e instanceof ApiError ? e.message : "Please try again." });
+  const fail = (e: unknown) => toast({ tone: "error", title: tr("That didn't work"), body: e instanceof ApiError ? e.message : tr("Please try again.") });
 
   const undo = React.useCallback(
     async (id: string) => {
@@ -38,7 +39,7 @@ export function useTaskActions() {
     async complete(t: Pick<Task, "id" | "title">) {
       try {
         const r = await api<{ next: Task | null }>(`/api/tasks/${t.id}/complete`, { body: {} });
-        toast({ tone: "success", title: "Done — nicely handled", body: r.next ? `Next one scheduled for ${fmt(r.next.due_at, app.tz, "EEE d MMM, HH:mm")}` : t.title, action: { label: "Undo", run: () => undo(t.id) } });
+        toast({ tone: "success", title: tr("Done — nicely handled"), body: r.next ? tr("Next one scheduled for {date}", { date: fmt(r.next.due_at, app.tz, "EEE d MMM, HH:mm") }) : t.title, action: { label: tr("Undo"), run: () => undo(t.id) } });
         window.setTimeout(app.bumpData, 380);
         return true;
       } catch (e) {
@@ -53,7 +54,7 @@ export function useTaskActions() {
     async reschedule(t: Pick<Task, "id" | "title">, iso: string) {
       try {
         const r = await api<{ reminders: unknown[]; skipped_reminders: unknown[] }>(`/api/tasks/${t.id}/reschedule`, { body: { due_at: iso } });
-        toast({ tone: "success", title: "Rescheduled", body: `${fmt(iso, app.tz, "EEE d MMM · HH:mm")} — ${r.reminders.length} reminder${r.reminders.length === 1 ? "" : "s"} updated` });
+        toast({ tone: "success", title: tr("Rescheduled"), body: `${fmt(iso, app.tz, "EEE d MMM · HH:mm")} — ${tr("{n} reminders updated", { n: r.reminders.length })}` });
         app.bumpData();
       } catch (e) {
         fail(e);
@@ -62,7 +63,7 @@ export function useTaskActions() {
     async snooze(t: Pick<Task, "id" | "title">, minutes: number) {
       try {
         await api(`/api/tasks/${t.id}/snooze`, { body: { minutes } });
-        toast({ tone: "info", title: `Snoozed ${minutes >= 60 ? `${minutes / 60} h` : `${minutes} min`}`, body: "I'll remind you again then." });
+        toast({ tone: "info", title: `Snoozed ${minutes >= 60 ? `${minutes / 60} h` : `${minutes} min`}`, body: tr("I'll remind you again then.") });
       } catch (e) {
         fail(e);
       }
@@ -70,7 +71,7 @@ export function useTaskActions() {
     async remove(t: Pick<Task, "id" | "title">) {
       try {
         await api(`/api/tasks/${t.id}`, { method: "DELETE" });
-        toast({ tone: "info", title: "Task deleted", body: t.title });
+        toast({ tone: "info", title: tr("Task deleted"), body: t.title });
         app.bumpData();
         return true;
       } catch (e) {
@@ -107,22 +108,22 @@ export function RescheduleMenu({ task, children, align = "right" }: { task: Pick
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: -6, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.96 }} transition={{ type: "spring", stiffness: 500, damping: 34 }} className={cn("absolute z-30 mt-2 w-72 origin-top rounded-2xl bg-surface p-3 shadow-2xl ring-1 ring-gold/30", align === "right" ? "right-0" : "left-0")} role="menu">
-            <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">Move to</p>
+            <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">{tr("Move to")}</p>
             <div className="grid grid-cols-2 gap-1.5">
               {presets.map((p) => (
                 <button key={p.key} role="menuitem" onClick={() => run(p.iso)} className="rounded-xl bg-surface2 px-3 py-2.5 text-left text-[13px] font-medium transition hover:bg-gold/20">
-                  {p.label}
+                  {tr(p.label)}
                 </button>
               ))}
             </div>
             <div className="mt-3 space-y-2 border-t border-line pt-3">
-              <Input type="datetime-local" value={custom} onChange={(e) => setCustom(e.target.value)} className="h-10" aria-label="Pick a date and time" />
+              <Input type="datetime-local" value={custom} onChange={(e) => setCustom(e.target.value)} className="h-10" aria-label={tr("Pick a date and time")} />
               <Button size="sm" variant="primary" className="w-full" onClick={() => fromLocalInput(custom, app.tz) && run(fromLocalInput(custom, app.tz)!)}>
-                <CalendarClock className="size-4" /> Move here
+                <CalendarClock className="size-4" />{" "}{tr("Move here")}
               </Button>
             </div>
             <div className="mt-3 border-t border-line pt-3">
-              <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">Snooze reminder</p>
+              <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">{tr("Snooze reminder")}</p>
               <div className="flex gap-1.5">
                 {[15, 60, 180].map((m) => (
                   <button key={m} onClick={() => (setOpen(false), actions.snooze(task, m))} className="flex-1 rounded-xl bg-surface2 py-2 text-[13px] font-medium hover:bg-gold/20">
@@ -156,7 +157,7 @@ export function TaskRow({ task, compact = false, showClient = true, order }: { t
       {order && <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gold text-xs font-bold text-navy">{order}</span>}
       <CompleteCheck
         checked={done}
-        label={done ? `Mark "${task.title}" as not done` : `Complete "${task.title}"`}
+        label={done ? tr("Mark “{title}” as not done", { title: task.title }) : tr("Complete “{title}”", { title: task.title })}
         onToggle={async () => {
           const next = !done;
           setOptimistic(next);
@@ -166,20 +167,20 @@ export function TaskRow({ task, compact = false, showClient = true, order }: { t
       />
       <button onClick={open} className="min-w-0 flex-1 text-left">
         <span className="flex items-center gap-2">
-          <PriorityDot p={task.priority} />
-          <span className={cn("line-clamp-2 text-[15px] font-medium leading-snug transition-colors sm:line-clamp-1", done && "text-muted line-through")}>{task.title}</span>
-          {task.recurrence && <Repeat className="size-3.5 shrink-0 text-muted" aria-label={`Repeats ${task.recurrence}`} />}
+          <PriorityDot p={tr(task.priority)} />
+          <span className={cn("line-clamp-2 text-[15px] font-medium leading-snug transition-colors sm:line-clamp-1", done && "text-muted line-through")}>{tr(task.title)}</span>
+          {task.recurrence && <Repeat className="size-3.5 shrink-0 text-muted" aria-label={`Repeats ${tr(task.recurrence)}`} />}
         </span>
         <span className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted">
           {task.due_at && (
             <span className={cn("flex items-center gap-1 tabular", overdue && "font-semibold text-danger")}>
               <Clock className="size-3" /> {relativeDay(task.due_at, app.tz)} · {fmt(task.due_at, app.tz, "HH:mm")}
-              {overdue && " · overdue"}
+              {overdue && tr(" · overdue")}
             </span>
           )}
           <span className="flex items-center gap-1">
             <span className="size-2 rounded-full" style={{ background: CATEGORY_COLORS[task.category] }} />
-            {task.category}
+            {tr(task.category)}
           </span>
           {showClient && task.client_name && task.client_id && (
             <Link href={`/clients/${task.client_id}`} onClick={(e) => e.stopPropagation()} className="font-medium text-goldink hover:underline">
@@ -201,7 +202,7 @@ export function TaskRow({ task, compact = false, showClient = true, order }: { t
             </a>
           )}
           <RescheduleMenu task={task}>
-            <button aria-label="Reschedule or snooze" className="grid size-9 place-items-center rounded-xl text-muted hover:bg-surface3 hover:text-ink">
+            <button aria-label={tr("Reschedule or snooze")} className="grid size-9 place-items-center rounded-xl text-muted hover:bg-surface3 hover:text-ink">
               <AlarmClockPlus className="size-4" />
             </button>
           </RescheduleMenu>
@@ -258,7 +259,7 @@ function TaskDrawerInner() {
         setDraft(draftFromTask(t.task, app.tz));
         setClients(c.clients);
       })
-      .catch((e) => live && (setErr(e instanceof ApiError ? e.message : "Couldn't load this task."), setTask(null)))
+      .catch((e) => live && (setErr(e instanceof ApiError ? e.message : tr("Couldn't load this task.")), setTask(null)))
       .finally(() => live && setLoading(false));
     return () => {
       live = false;
@@ -273,11 +274,11 @@ function TaskDrawerInner() {
     try {
       const p = draftToPayload(draft, app.tz);
       const r = await api<{ reminders: unknown[]; skipped_reminders: { label: string }[] }>(`/api/tasks/${task.id}`, { method: "PATCH", body: p });
-      toast({ tone: "success", title: "Changes saved", body: r.skipped_reminders.length ? `${r.skipped_reminders.length} reminder(s) skipped — already in the past` : undefined });
+      toast({ tone: "success", title: tr("Changes saved"), body: r.skipped_reminders.length ? tr("{n} reminders skipped — already in the past", { n: r.skipped_reminders.length }) : undefined });
       app.bumpData();
       close();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Couldn't save.");
+      setErr(e instanceof ApiError ? e.message : tr("Couldn't save."));
     } finally {
       setBusy(false);
     }
@@ -287,25 +288,25 @@ function TaskDrawerInner() {
     <Drawer
       open={Boolean(id)}
       onClose={close}
-      title={task?.title ?? "Task"}
-      subtitle={task ? `${task.status === "completed" ? "Completed" : "Open"} · ${task.category}` : undefined}
+      title={task?.title ?? tr("Task")}
+      subtitle={task ? `${task.status === "completed" ? "Completed" : "Open"} · ${tr(task.category)}` : undefined}
       footer={
         task && draft ? (
           <>
-            <Button variant="ghost" size="sm" onClick={async () => confirm("Delete this task? Its reminders and calendar entry will be removed.") && (await actions.remove(task)) && close()} className="text-danger">
-              <Trash2 className="size-4" /> Delete
+            <Button variant="ghost" size="sm" onClick={async () => confirm(tr("Delete this task? Its reminders and calendar entry will be removed.")) && (await actions.remove(task)) && close()} className="text-danger">
+              <Trash2 className="size-4" />{" "}{tr("Delete")}
             </Button>
             {task.status === "pending" ? (
               <Button variant="soft" size="sm" onClick={async () => (await actions.complete(task)) && close()}>
-                <Check className="size-4" /> Complete
+                <Check className="size-4" />{" "}{tr("Complete")}
               </Button>
             ) : (
               <Button variant="soft" size="sm" onClick={async () => (await actions.reopen(task.id), close())}>
-                <Undo2 className="size-4" /> Reopen
+                <Undo2 className="size-4" />{" "}{tr("Reopen")}
               </Button>
             )}
             <Button variant="gold" size="md" className="ml-auto" onClick={save} loading={busy} disabled={problems.length > 0}>
-              Save changes
+              {tr("Save changes")}
             </Button>
           </>
         ) : undefined
@@ -324,7 +325,7 @@ function TaskDrawerInner() {
           {task.client_id && (
             <Link href={`/clients/${task.client_id}`} className="flex items-center justify-between rounded-2xl bg-surface2 px-4 py-3 text-sm font-medium transition hover:bg-gold/15">
               <span>
-                Client · <span className="text-goldink">{task.client_name}</span>
+                {tr("Client ·")}{" "}<span className="text-goldink">{task.client_name}</span>
               </span>
               <ExternalLink className="size-4 text-muted" />
             </Link>
@@ -332,26 +333,26 @@ function TaskDrawerInner() {
           <TaskForm draft={draft} onChange={setDraft} clients={clients} tz={app.tz} idPrefix="td" />
           {problems.length > 0 && <WarningList items={problems} />}
           <div>
-            <h3 className="mb-2 text-[13px] font-semibold">Reminder schedule</h3>
+            <h3 className="mb-2 text-[13px] font-semibold">{tr("Reminder schedule")}</h3>
             {reminders.length === 0 ? (
-              <p className="text-sm text-muted">No reminders for this task.</p>
+              <p className="text-sm text-muted">{tr("No reminders for this task.")}</p>
             ) : (
               <ul className="space-y-1.5">
                 {reminders.map((r) => (
                   <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface2 px-3.5 py-2.5 text-[13px]">
                     <span>
-                      {r.kind === "snooze" ? "Snoozed reminder" : r.offset_minutes !== null ? reminderLabel(r.offset_minutes) : "Custom time"}
+                      {r.kind === "snooze" ? tr("Snoozed reminder") : r.offset_minutes !== null ? reminderLabel(r.offset_minutes) : tr("Custom time")}
                       <span className="ml-2 tabular text-muted">{fmt(r.remind_at, app.tz, "EEE d MMM · HH:mm")}</span>
                     </span>
-                    <Chip tone={r.status === "sent" ? "success" : r.status === "failed" ? "danger" : r.status === "canceled" ? "neutral" : "gold"}>{r.status === "pending" ? "scheduled" : r.status}</Chip>
+                    <Chip tone={r.status === "sent" ? "success" : r.status === "failed" ? "danger" : r.status === "canceled" ? "neutral" : "gold"}>{r.status === "pending" ? tr("scheduled") : r.status}</Chip>
                   </li>
                 ))}
               </ul>
             )}
           </div>
           <p className="text-xs text-muted">
-            Created {fmt(task.created_at, app.tz, "d MMM yyyy, HH:mm")}
-            {task.source === "ai" && " · captured with AI and approved by you"}
+            {tr("Created")}{" "}{fmt(task.created_at, app.tz, "d MMM yyyy, HH:mm")}
+            {task.source === "ai" && tr(" · captured with AI and approved by you")}
           </p>
         </div>
       )}

@@ -3,6 +3,8 @@
 import * as React from "react";
 import { MotionConfig } from "motion/react";
 import { ToastProvider } from "./ui";
+import { Settings } from "luxon";
+import { dateLocale, setRenderLang, type Lang } from "@/lib/i18n";
 
 type Theme = "light" | "dark" | "system";
 const ThemeCtx = React.createContext<{ theme: Theme; setTheme: (t: Theme) => void; resolved: "light" | "dark" } | null>(null);
@@ -18,7 +20,11 @@ function apply(theme: Theme) {
   return dark ? "dark" : "light";
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, lang }: { children: React.ReactNode; lang: Lang }) {
+  // Server components and client components run in separate module instances, so the language is handed over here
+  // (before any child renders) for both the server render and the browser. Dates follow it too.
+  setRenderLang(lang);
+  Settings.defaultLocale = dateLocale(lang);
   const [theme, setThemeState] = React.useState<Theme>("system");
   const [resolved, setResolved] = React.useState<"light" | "dark">("light");
 

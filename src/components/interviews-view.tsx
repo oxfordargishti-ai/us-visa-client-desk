@@ -11,9 +11,10 @@ import { countdownLabel } from "./interview-card";
 import { api, ApiError } from "@/lib/client/api";
 import { fmt, fromLocalInput, phoneHref, toLocalInput, whatsappHref } from "@/lib/client/format";
 import { INTERVIEW_OUTCOMES, PREP_STATUSES, REMINDER_PRESETS, VISA_CATEGORIES } from "@/lib/constants";
-import { useNow } from "@/lib/client/hooks";
+import { useNow, useCreateIntent } from "@/lib/client/hooks";
 import type { InterviewRow } from "@/lib/types";
 import { DateTime } from "luxon";
+import { tr } from "@/lib/i18n";
 
 interface ClientOpt {
   id: string;
@@ -26,24 +27,25 @@ export function InterviewsView({ upcoming, past, clients, defaults, scope }: { u
   const app = useApp();
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  useCreateIntent("interview", () => setOpen(true));
   const list = scope === "upcoming" ? upcoming : past;
   return (
     <Stagger className="space-y-6">
       <Rise className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink">Visa interviews</p>
-          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">Interviews</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink">{tr("Visa interviews")}</p>
+          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">{tr("Interviews")}</h1>
         </div>
         <Button variant="gold" size="lg" onClick={() => setOpen(true)} className="self-start">
-          <Plus className="size-4" /> Schedule interview
+          <Plus className="size-4" />{" "}{tr("Schedule interview")}
         </Button>
       </Rise>
       <Rise>
-        <Segmented<"upcoming" | "past"> id="iv-scope" value={scope} onChange={(v) => router.replace(`/interviews?scope=${v}`, { scroll: false })} options={[{ value: "upcoming", label: <>Upcoming <span className="ml-1 text-xs opacity-70">{upcoming.length}</span></> }, { value: "past", label: "Past" }]} />
+        <Segmented<"upcoming" | "past"> id="iv-scope" value={scope} onChange={(v) => router.replace(`/interviews?scope=${v}`, { scroll: false })} options={[{ value: "upcoming", label: <>{tr("Upcoming")}{" "}<span className="ml-1 text-xs opacity-70">{upcoming.length}</span></> }, { value: "past", label: "Past" }]} />
       </Rise>
       {list.length === 0 ? (
         <Card className="p-4">
-          <EmptyState icon={<Landmark className="size-6" />} title={scope === "upcoming" ? "No upcoming interviews" : "No past interviews yet"} body="Schedule an interview and it appears here, on the calendar and on your dashboard — with reminders." action={<Button variant="gold" size="sm" onClick={() => setOpen(true)}><Plus className="size-4" /> Schedule interview</Button>} />
+          <EmptyState icon={<Landmark className="size-6" />} title={scope === "upcoming" ? tr("No upcoming interviews") : tr("No past interviews yet")} body={tr("Schedule an interview and it appears here, on the calendar and on your dashboard — with reminders.")} action={<Button variant="gold" size="sm" onClick={() => setOpen(true)}><Plus className="size-4" />{" "}{tr("Schedule interview")}</Button>} />
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
@@ -79,7 +81,7 @@ function InterviewPanel({ iv, index }: { iv: InterviewRow; index: number }) {
       if (msg) toast({ tone: "success", title: msg });
       app.bumpData();
     } catch (e) {
-      toast({ tone: "error", title: "Couldn't save", body: e instanceof ApiError ? e.message : undefined });
+      toast({ tone: "error", title: tr("Couldn't save"), body: e instanceof ApiError ? e.message : undefined });
     }
   };
   const toggle = (id: string) => {
@@ -107,17 +109,17 @@ function InterviewPanel({ iv, index }: { iv: InterviewRow; index: number }) {
           </div>
           <p className="mt-1.5 font-medium tabular">{fmt(iv.interview_at, app.tz, "EEEE d MMMM · HH:mm")}</p>
           <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
-            <MapPin className="size-3.5" /> {iv.embassy ?? "Embassy not set"} {iv.visa_category && <>· {iv.visa_category}</>}
+            <MapPin className="size-3.5" /> {iv.embassy ?? tr("Embassy not set")} {iv.visa_category && <>· {tr(iv.visa_category)}</>}
           </p>
         </div>
         <div className="hidden flex-col gap-1.5 sm:flex">
           {iv.client_phone && (
-            <a href={phoneHref(iv.client_phone)} aria-label="Call" className="grid size-10 place-items-center rounded-xl bg-surface2 text-muted ring-1 ring-line hover:text-ink">
+            <a href={phoneHref(iv.client_phone)} aria-label={tr("Call")} className="grid size-10 place-items-center rounded-xl bg-surface2 text-muted ring-1 ring-line hover:text-ink">
               <Phone className="size-4" />
             </a>
           )}
           {iv.client_whatsapp && (
-            <a href={whatsappHref(iv.client_whatsapp)} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="grid size-10 place-items-center rounded-xl bg-surface2 text-muted ring-1 ring-line hover:text-ink">
+            <a href={whatsappHref(iv.client_whatsapp)} target="_blank" rel="noopener noreferrer" aria-label={tr("WhatsApp")} className="grid size-10 place-items-center rounded-xl bg-surface2 text-muted ring-1 ring-line hover:text-ink">
               <MessageCircle className="size-4" />
             </a>
           )}
@@ -126,21 +128,21 @@ function InterviewPanel({ iv, index }: { iv: InterviewRow; index: number }) {
 
       <div className="flex flex-wrap items-center gap-2 border-t border-line px-5 py-3">
         <label className="flex items-center gap-2 text-xs font-medium text-muted">
-          Preparation
-          <Select value={iv.prep_status} onChange={(e) => patch({ prep_status: e.target.value }, "Preparation updated")} className="h-9 w-36 text-sm" aria-label="Preparation status">
-            {PREP_STATUSES.map((s) => <option key={s}>{s}</option>)}
+          {tr("Preparation")}
+          <Select value={tr(iv.prep_status)} onChange={(e) => patch({ prep_status: e.target.value }, "Preparation updated")} className="h-9 w-36 text-sm" aria-label={tr("Preparation status")}>
+            {PREP_STATUSES.map((s) => <option key={s} value={s}>{tr(s)}</option>)}
           </Select>
         </label>
         <Link href={`/clients/${iv.client_id}?tab=documents`} className="ml-auto">
           <Chip tone={iv.docs_status === "Complete" ? "success" : iv.docs_status === "Partial" ? "warning" : "danger"}>
-            <FileCheck2 className="size-3" /> Documents: {iv.docs_status}
+            <FileCheck2 className="size-3" />{" "}{tr("Documents:")}{" "}{tr(iv.docs_status)}
           </Chip>
         </Link>
       </div>
 
       <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between border-t border-line px-5 py-3 text-left text-sm font-semibold hover:bg-surface2/60">
         <span className="flex items-center gap-2">
-          <ClipboardCheck className="size-4 text-goldink" /> Preparation checklist
+          <ClipboardCheck className="size-4 text-goldink" />{" "}{tr("Preparation checklist")}
           <span className="tabular text-xs font-medium text-muted">{done}/{checklist.length}</span>
         </span>
         <span className="flex items-center gap-3">
@@ -158,38 +160,38 @@ function InterviewPanel({ iv, index }: { iv: InterviewRow; index: number }) {
                     <span className={cn("grid size-5 shrink-0 place-items-center rounded-md border-2 transition", c.done ? "border-transparent bg-gold" : "border-linestrong")}>
                       {c.done && <Check className="size-3.5 text-navy" strokeWidth={3.5} />}
                     </span>
-                    <span className={cn(c.done && "text-muted line-through")}>{c.label}</span>
+                    <span className={cn(c.done && "text-muted line-through")}>{tr(c.label)}</span>
                   </button>
                 </li>
               ))}
             </ul>
             <div className="px-5 pb-4">
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={() => notes !== (iv.notes ?? "") && patch({ notes })} placeholder="Interview notes…" className="min-h-20 text-sm" aria-label="Interview notes" />
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={() => notes !== (iv.notes ?? "") && patch({ notes })} placeholder={tr("Interview notes…")} className="min-h-20 text-sm" aria-label={tr("Interview notes")} />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-line bg-surface2/50 px-5 py-3">
-        <Button size="sm" variant="soft" onClick={() => setResched(true)}><CalendarClock className="size-4" /> Reschedule</Button>
-        <Button size="sm" variant="soft" onClick={() => app.openQuickAdd({ title: `Follow up with ${iv.client_name} after interview`, clientId: iv.client_id, category: "Client Phone Call", dueAt: DateTime.fromISO(iv.interview_at).plus({ days: 1 }).toUTC().toISO() })}><ListPlus className="size-4" /> Follow-up task</Button>
-        <Select value={iv.outcome} onChange={(e) => patch({ outcome: e.target.value }, `Outcome: ${e.target.value}`)} className="h-9 w-44 text-sm" aria-label="Interview outcome">
-          {INTERVIEW_OUTCOMES.map((o) => <option key={o}>{o}</option>)}
+        <Button size="sm" variant="soft" onClick={() => setResched(true)}><CalendarClock className="size-4" />{" "}{tr("Reschedule")}</Button>
+        <Button size="sm" variant="soft" onClick={() => app.openQuickAdd({ title: `Follow up with ${iv.client_name} after interview`, clientId: iv.client_id, category: "Client Phone Call", dueAt: DateTime.fromISO(iv.interview_at).plus({ days: 1 }).toUTC().toISO() })}><ListPlus className="size-4" />{" "}{tr("Follow-up task")}</Button>
+        <Select value={tr(iv.outcome)} onChange={(e) => patch({ outcome: e.target.value }, `Outcome: ${e.target.value}`)} className="h-9 w-44 text-sm" aria-label={tr("Interview outcome")}>
+          {INTERVIEW_OUTCOMES.map((o) => <option key={o} value={o}>{tr(o)}</option>)}
         </Select>
         <Link href={`/clients/${iv.client_id}`} className="ml-auto text-sm font-medium text-goldink hover:underline">
-          Open client <ExternalLink className="ml-0.5 inline size-3.5" />
+          {tr("Open client")}{" "}<ExternalLink className="ml-0.5 inline size-3.5" />
         </Link>
         <Button size="sm" variant="ghost" className="text-danger" onClick={async () => {
-          if (!confirm(`Remove ${iv.client_name}'s interview? Its reminders and calendar entry will be deleted.`)) return;
+          if (!confirm(tr("Remove {name}'s interview? Its reminders and calendar entry will be deleted.", { name: iv.client_name ?? "" }))) return;
           await api(`/api/interviews/${iv.id}`, { method: "DELETE" });
           app.bumpData();
-        }} aria-label="Delete interview">
+        }} aria-label={tr("Delete interview")}>
           <Trash2 className="size-4" />
         </Button>
       </div>
 
-      <Modal open={resched} onClose={() => setResched(false)} title="Reschedule interview" subtitle="Old reminders are cancelled and a new schedule is created." size="sm" footer={<><Button variant="outline" onClick={() => setResched(false)}>Cancel</Button><Button variant="gold" loading={busy} onClick={async () => { const iso = fromLocalInput(when, app.tz); if (!iso) return; setBusy(true); await patch({ interview_at: iso }, "Interview rescheduled"); setBusy(false); setResched(false); }}>Save new time</Button></>}>
-        <Field label={`New date & time (${app.tz})`}>
+      <Modal open={resched} onClose={() => setResched(false)} title={tr("Reschedule interview")} subtitle={tr("Old reminders are cancelled and a new schedule is created.")} size="sm" footer={<><Button variant="outline" onClick={() => setResched(false)}>{tr("Cancel")}</Button><Button variant="gold" loading={busy} onClick={async () => { const iso = fromLocalInput(when, app.tz); if (!iso) return; setBusy(true); await patch({ interview_at: iso }, "Interview rescheduled"); setBusy(false); setResched(false); }}>{tr("Save new time")}</Button></>}>
+        <Field label={tr("New date & time ({tz})", { tz: app.tz })}>
           <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
         </Field>
       </Modal>
@@ -226,45 +228,45 @@ export function ScheduleModal({ open, onClose, clients, defaults, tz }: { open: 
     setErr(null);
     try {
       await api("/api/interviews", { body: { client_id: clientId, interview_at: iso, embassy: embassy || null, visa_category: visa || null, reminder_offsets: offsets } });
-      toast({ tone: "success", title: "Interview scheduled", body: "Added to the calendar with reminders." });
+      toast({ tone: "success", title: tr("Interview scheduled"), body: tr("Added to the calendar with reminders.") });
       app.bumpData();
       onClose();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Couldn't schedule.");
+      setErr(e instanceof ApiError ? e.message : tr("Couldn't schedule."));
     } finally {
       setBusy(false);
     }
   }
   return (
-    <Modal open={open} onClose={onClose} title="Schedule an interview" subtitle="It will appear on the calendar, the dashboard and the interview list." footer={<><Button variant="outline" onClick={onClose}>Cancel</Button><Button variant="gold" loading={busy} disabled={!clientId || !iso} onClick={submit}><Check className="size-4" /> Schedule</Button></>}>
+    <Modal open={open} onClose={onClose} title={tr("Schedule an interview")} subtitle={tr("It will appear on the calendar, the dashboard and the interview list.")} footer={<><Button variant="outline" onClick={onClose}>{tr("Cancel")}</Button><Button variant="gold" loading={busy} disabled={!clientId || !iso} onClick={submit}><Check className="size-4" />{" "}{tr("Schedule")}</Button></>}>
       <div className="space-y-4">
-        <Field label="Client">
+        <Field label={tr("Client")}>
           <Select value={clientId} onChange={(e) => pick(e.target.value)} data-autofocus>
-            <option value="">Choose a client…</option>
+            <option value="">{tr("Choose a client…")}</option>
             {clients.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}
           </Select>
         </Field>
-        <Field label={`Interview date & time (${tz})`}>
+        <Field label={tr("Interview date & time ({tz})", { tz })}>
           <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
         </Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Embassy or consulate"><Input value={embassy} onChange={(e) => setEmbassy(e.target.value)} placeholder="U.S. Embassy Yerevan" /></Field>
-          <Field label="Visa category">
+          <Field label={tr("Embassy or consulate")}><Input value={embassy} onChange={(e) => setEmbassy(e.target.value)} placeholder={tr("U.S. Embassy Yerevan")} /></Field>
+          <Field label={tr("Visa category")}>
             <Select value={visa} onChange={(e) => setVisa(e.target.value)}>
               <option value="">—</option>
-              {VISA_CATEGORIES.map((v) => <option key={v}>{v}</option>)}
-              {visa && !VISA_CATEGORIES.includes(visa as never) && <option>{visa}</option>}
+              {VISA_CATEGORIES.map((v) => <option key={v} value={v}>{tr(v)}</option>)}
+              {visa && !VISA_CATEGORIES.includes(visa as never) && <option value={visa}>{tr(visa)}</option>}
             </Select>
           </Field>
         </div>
         <div>
-          <span className="mb-2 block text-[13px] font-medium">Reminders</span>
+          <span className="mb-2 block text-[13px] font-medium">{tr("Reminders")}</span>
           <div className="flex flex-wrap gap-2">
             {REMINDER_PRESETS.map((p) => {
               const on = offsets.includes(p.minutes);
               return (
                 <button key={p.minutes} type="button" aria-pressed={on} onClick={() => setOffsets(on ? offsets.filter((x) => x !== p.minutes) : [...offsets, p.minutes])} className={cn("rounded-full px-3 py-1.5 text-[13px] font-medium ring-1 transition", on ? "bg-gold/25 text-[#6b5019] ring-gold dark:text-gold2" : "bg-surface text-muted ring-line hover:ring-gold/60")}>
-                  {on && "✓ "}{p.label}
+                  {on && "✓ "}{tr(p.label)}
                 </button>
               );
             })}

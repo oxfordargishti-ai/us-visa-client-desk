@@ -11,6 +11,7 @@ import { draftProblems, draftToPayload, emptyDraft, type Draft } from "@/lib/cli
 import type { TaskPreview } from "@/lib/ai/task-parser";
 import { SPEECH_LANGS, useSpeech } from "@/lib/client/hooks";
 import { utcToZonedParts } from "@/lib/time";
+import { tr } from "@/lib/i18n";
 
 const EXAMPLES = [
   "Call Karen tomorrow at 3 PM to prepare him for his U.S. visa interview. Remind me five hours before.",
@@ -79,7 +80,7 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
         reminder_offsets: p.reminder_offsets,
       });
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "The AI couldn't read that. You can still fill the task in manually.");
+      setError(e instanceof ApiError ? e.message : tr("The AI couldn't read that. You can still fill the task in manually."));
     } finally {
       setParsing(false);
     }
@@ -95,12 +96,12 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
     try {
       const payload = { ...draftToPayload(draft, app.tz), source: preview ? "ai" : prefill?.source ?? "manual", source_ref: prefill?.sourceRef ?? null, ai_original_text: preview?.ai_original_text ?? null };
       const r = await api<{ task: { id: string }; reminders: unknown[]; skipped_reminders: { label: string }[] }>("/api/tasks", { body: payload });
-      const bits = [payload.due_at ? "on your calendar" : null, r.reminders.length ? `${r.reminders.length} reminder${r.reminders.length > 1 ? "s" : ""} scheduled` : null].filter(Boolean);
-      toast({ tone: "success", title: "Task saved", body: [bits.join(" · "), r.skipped_reminders.length ? `${r.skipped_reminders.length} reminder(s) skipped — already in the past` : ""].filter(Boolean).join(" — ") || undefined });
+      const bits = [payload.due_at ? tr("on your calendar") : null, r.reminders.length ? tr("{n} reminders scheduled", { n: r.reminders.length }) : null].filter(Boolean);
+      toast({ tone: "success", title: tr("Task saved"), body: [bits.join(" · "), r.skipped_reminders.length ? tr("{n} reminders skipped — already in the past", { n: r.skipped_reminders.length }) : ""].filter(Boolean).join(" — ") || undefined });
       app.bumpData();
       onClose();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Couldn't save the task.");
+      setError(e instanceof ApiError ? e.message : tr("Couldn't save the task."));
     } finally {
       setSaving(false);
     }
@@ -113,21 +114,21 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
       open={open}
       onClose={onClose}
       size="lg"
-      title={reviewing ? "Review before saving" : "New task"}
-      subtitle={reviewing ? "Nothing is saved until you confirm." : "Describe it in your own words, or fill it in yourself."}
+      title={reviewing ? tr("Review before saving") : tr("New task")}
+      subtitle={reviewing ? tr("Nothing is saved until you confirm.") : tr("Describe it in your own words, or fill it in yourself.")}
       footer={
         reviewing || mode === "manual" ? (
           <>
             {reviewing && (
               <Button variant="ghost" onClick={() => setPreview(null)} className="mr-auto">
-                <ArrowLeft className="size-4" /> Edit my text
+                <ArrowLeft className="size-4" />{" "}{tr("Edit my text")}
               </Button>
             )}
             <Button variant="outline" onClick={onClose}>
-              Cancel
+              {tr("Cancel")}
             </Button>
             <Button variant="gold" onClick={save} disabled={!canSave} loading={saving}>
-              <Check className="size-4" /> {reviewing ? "Confirm & save task" : "Save task"}
+              <Check className="size-4" /> {reviewing ? tr("Confirm & save task") : tr("Save task")}
             </Button>
           </>
         ) : undefined
@@ -140,7 +141,7 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
             value={mode}
             onChange={setMode}
             options={[
-              { value: "ai", label: <span className="flex items-center gap-1.5"><Sparkles className="size-3.5" /> Describe it</span> },
+              { value: "ai", label: <span className="flex items-center gap-1.5"><Sparkles className="size-3.5" />{" "}{tr("Describe it")}</span> },
               { value: "manual", label: "Manual" },
             ]}
           />
@@ -152,10 +153,10 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
           <motion.div key="ai-input" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25, ease: EASE }}>
             {!app.aiEnabled ? (
               <div className="rounded-2xl bg-surface2 p-5 text-sm">
-                <p className="font-semibold">AI task capture isn't set up yet</p>
-                <p className="mt-1 text-muted">Add your Anthropic API key in the server settings (see the setup guide) or switch it on in Settings. Until then, the Manual tab works fully.</p>
+                <p className="font-semibold">{tr("AI task capture isn't set up yet")}</p>
+                <p className="mt-1 text-muted">{tr("Add your Anthropic API key in the server settings (see the setup guide) or switch it on in Settings. Until then, the Manual tab works fully.")}</p>
                 <Button variant="soft" size="sm" className="mt-3" onClick={() => setMode("manual")}>
-                  Use Manual
+                  {tr("Use Manual")}
                 </Button>
               </div>
             ) : (
@@ -167,19 +168,19 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
                     onKeyDown={(e) => {
                       if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && text.trim().length > 2) runParse();
                     }}
-                    placeholder="Call Karen tomorrow at 3 PM to prepare him for his U.S. visa interview. Remind me five hours before."
+                    placeholder={tr("Call Karen tomorrow at 3 PM to prepare him for his U.S. visa interview. Remind me five hours before.")}
                     className="min-h-36 pr-14 text-base"
                     maxLength={1500}
                     data-autofocus
-                    aria-label="Describe the task"
+                    aria-label={tr("Describe the task")}
                   />
                   {speech.supported && (
                     <div className="absolute right-3 top-3 flex flex-col items-center gap-1.5">
-                      <button type="button" onClick={speech.listening ? speech.stop : speech.start} aria-label={speech.listening ? "Stop dictation" : "Dictate"} className={cn("relative grid size-10 place-items-center rounded-full transition", speech.listening ? "bg-danger text-white" : "bg-surface2 hover:bg-surface3")}>
+                      <button type="button" onClick={speech.listening ? speech.stop : speech.start} aria-label={speech.listening ? tr("Stop dictation") : tr("Dictate")} className={cn("relative grid size-10 place-items-center rounded-full transition", speech.listening ? "bg-danger text-white" : "bg-surface2 hover:bg-surface3")}>
                         {speech.listening && <span className="animate-pulse-ring absolute inset-0 rounded-full border-2 border-danger" />}
                         {speech.listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
                       </button>
-                      <button type="button" onClick={() => speech.setLang(SPEECH_LANGS[(SPEECH_LANGS.findIndex((l) => l.code === speech.lang) + 1) % SPEECH_LANGS.length].code)} className="rounded-md px-1.5 text-[10px] font-bold text-muted hover:bg-surface2" aria-label="Dictation language">
+                      <button type="button" onClick={() => speech.setLang(SPEECH_LANGS[(SPEECH_LANGS.findIndex((l) => l.code === speech.lang) + 1) % SPEECH_LANGS.length].code)} className="rounded-md px-1.5 text-[10px] font-bold text-muted hover:bg-surface2" aria-label={tr("Dictation language")}>
                         {SPEECH_LANGS.find((l) => l.code === speech.lang)?.label}
                       </button>
                     </div>
@@ -194,16 +195,16 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
                 </div>
                 <div className="mt-5 flex items-center justify-between gap-3">
                   <p className="flex items-center gap-1.5 text-xs text-muted">
-                    <ShieldCheck className="size-3.5 text-success" /> You review everything before it's saved.
+                    <ShieldCheck className="size-3.5 text-success" />{" "}{tr("You review everything before it's saved.")}
                   </p>
                   <Button variant="gold" size="lg" onClick={runParse} loading={parsing} disabled={text.trim().length < 3}>
-                    <Wand2 className="size-4" /> Preview task
+                    <Wand2 className="size-4" />{" "}{tr("Preview task")}
                   </Button>
                 </div>
                 {parsing && (
                   <div className="mt-5 space-y-3" aria-live="polite" aria-busy>
                     <p className="flex items-center gap-2 text-sm font-medium text-goldink">
-                      <Sparkles className="size-4 animate-pulse" /> Reading your instruction…
+                      <Sparkles className="size-4 animate-pulse" />{" "}{tr("Reading your instruction…")}
                     </p>
                     <Skeleton className="h-10" />
                     <Skeleton className="h-10 w-4/5" />
@@ -222,11 +223,11 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
                 <div className="flex items-start gap-3 rounded-2xl bg-gradient-to-br from-gold/20 to-gold/5 p-4 ring-1 ring-gold/30">
                   <Sparkles className="mt-0.5 size-5 shrink-0 text-goldink" />
                   <div className="min-w-0 text-sm">
-                    <p className="font-semibold">Here's what I understood</p>
+                    <p className="font-semibold">{tr("Here's what I understood")}</p>
                     <p className="mt-0.5 break-words text-muted">“{preview.ai_original_text}”</p>
                     {flags.length > 0 && (
                       <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-medium text-[#7a520c] dark:text-[#f0c36d]">
-                        Please check: {flags.map((f) => <Chip key={f} tone="warning">{f}</Chip>)}
+                        {tr("Please check:")}{" "}{flags.map((f) => <Chip key={f} tone="warning">{f}</Chip>)}
                       </p>
                     )}
                   </div>
@@ -234,13 +235,13 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
                 <WarningList items={preview.warnings} />
                 {preview.duplicates.length > 0 && (
                   <div className="rounded-xl bg-surface2 p-3 text-[13px]">
-                    <p className="mb-1 font-semibold">Similar open task{preview.duplicates.length > 1 ? "s" : ""}</p>
+                    <p className="mb-1 font-semibold">{tr("Similar open tasks")}</p>
                     {preview.duplicates.map((d) => (
                       <p key={d.id} className="truncate text-muted">• {d.title}</p>
                     ))}
                   </div>
                 )}
-                {preview.assumptions.length > 0 && <p className="text-xs text-muted">Assumed: {preview.assumptions.join("; ")}</p>}
+                {preview.assumptions.length > 0 && <p className="text-xs text-muted">{tr("Assumed:")}{" "}{preview.assumptions.join("; ")}</p>}
               </>
             )}
 
@@ -250,7 +251,7 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
               <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-warning/10 p-3.5 text-[13px] ring-1 ring-warning/30">
                 <input type="checkbox" checked={ackNoClient} onChange={(e) => setAckNoClient(e.target.checked)} className="mt-0.5 size-4 accent-[#c9a86a]" />
                 <span>
-                  <b>“{preview.client_mention}”</b> isn't linked to a client. Choose a client above, or tick this to save the task without linking one.
+                  <b>“{preview.client_mention}”</b>{" "}{tr("isn't linked to a client. Choose a client above, or tick this to save the task without linking one.")}
                 </span>
               </label>
             )}
@@ -271,7 +272,7 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
         <p role="alert" className="mt-4 rounded-xl bg-danger/10 px-3.5 py-2.5 text-sm font-medium text-danger">
           {error}{" "}
           <button className="underline" onClick={() => setMode("manual")}>
-            Fill it in manually
+            {tr("Fill it in manually")}
           </button>
         </p>
       )}

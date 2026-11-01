@@ -189,3 +189,20 @@ export function useNow(ms = 30_000) {
   }, [ms]);
   return now;
 }
+
+/** Opens a page's "new …" form when the global ＋ chooser asks for it (event while here, or ?new=kind on arrival). */
+export function useCreateIntent(kind: string, open: () => void) {
+  const openRef = React.useRef(open);
+  openRef.current = open;
+  React.useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("new") === kind) {
+      openRef.current();
+      url.searchParams.delete("new");
+      window.history.replaceState(window.history.state, "", url.pathname + (url.search || "") + url.hash);
+    }
+    const on = (e: Event) => (e as CustomEvent).detail === kind && openRef.current();
+    window.addEventListener("uva:create", on);
+    return () => window.removeEventListener("uva:create", on);
+  }, [kind]);
+}

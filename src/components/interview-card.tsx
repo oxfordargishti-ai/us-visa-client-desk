@@ -10,6 +10,7 @@ import { fmt, phoneHref, whatsappHref } from "@/lib/client/format";
 import { humanCountdown } from "@/lib/time";
 import { useNow } from "@/lib/client/hooks";
 import type { InterviewRow } from "@/lib/types";
+import { tr } from "@/lib/i18n";
 
 export function countdownLabel(iso: string, now: Date | null) {
   if (!now) return { big: "—", small: "", past: false, frac: 0 };
@@ -48,13 +49,13 @@ export function InterviewCard({ iv, compact = false, index = 0 }: { iv: Intervie
           {fmt(iv.interview_at, app.tz, "EEE d MMM · HH:mm")}
         </p>
         <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-muted">
-          <MapPin className="size-3 shrink-0" /> {iv.embassy ?? "Embassy not set"}
-          {iv.visa_category && <span>· {iv.visa_category}</span>}
+          <MapPin className="size-3 shrink-0" /> {iv.embassy ?? tr("Embassy not set")}
+          {iv.visa_category && <span>· {tr(iv.visa_category)}</span>}
         </p>
         {!compact && (
           <div className="mt-2.5 flex flex-wrap gap-1.5">
-            <Chip tone={prepTone[iv.prep_status]}><GraduationCap className="size-3" /> Prep: {iv.prep_status}</Chip>
-            <Chip tone={docsTone[iv.docs_status]}><FileCheck2 className="size-3" /> Docs: {iv.docs_status}</Chip>
+            <Chip tone={prepTone[iv.prep_status]}><GraduationCap className="size-3" />{" "}{tr("Prep:")}{" "}{tr(iv.prep_status)}</Chip>
+            <Chip tone={docsTone[iv.docs_status]}><FileCheck2 className="size-3" />{" "}{tr("Docs:")}{" "}{tr(iv.docs_status)}</Chip>
           </div>
         )}
       </div>

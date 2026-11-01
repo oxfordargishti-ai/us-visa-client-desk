@@ -8,6 +8,7 @@ import { PRIORITIES, REMINDER_PRESETS, TASK_CATEGORIES, CATEGORY_COLORS, type Pr
 import { planReminders, reminderLabel } from "@/lib/time";
 import { draftDue, quickDates, type Draft } from "@/lib/client/task-draft";
 import { fmt } from "@/lib/client/format";
+import { tr } from "@/lib/i18n";
 
 export type Flag = "title" | "client" | "date" | "time";
 export interface ClientOption {
@@ -34,34 +35,34 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
 
   return (
     <div className="space-y-5">
-      <Field label="Task" flag={flags.includes("title")}>
-        <Input id={`${idPrefix}-title`} value={draft.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Call Karen — Visa Interview Preparation" maxLength={200} data-autofocus />
+      <Field label={tr("Task")} flag={flags.includes("title")}>
+        <Input id={`${idPrefix}-title`} value={draft.title} onChange={(e) => set("title", e.target.value)} placeholder={tr("e.g. Call Karen — Visa Interview Preparation")} maxLength={200} data-autofocus />
       </Field>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Category">
+        <Field label={tr("Category")}>
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 size-2.5 -translate-y-1/2 rounded-full" style={{ background: CATEGORY_COLORS[draft.category] }} />
-            <Select value={draft.category} onChange={(e) => set("category", e.target.value as Draft["category"])} className="pl-9">
+            <Select value={tr(draft.category)} onChange={(e) => set("category", e.target.value as Draft["category"])} className="pl-9">
               {TASK_CATEGORIES.map((c) => (
-                <option key={c}>{c}</option>
+                <option key={c} value={c}>{tr(c)}</option>
               ))}
             </Select>
           </div>
         </Field>
-        <Field label="Priority">
-          <div className="grid grid-cols-4 gap-1 rounded-xl bg-surface2 p-1" role="radiogroup" aria-label="Priority">
+        <Field label={tr("Priority")}>
+          <div className="grid grid-cols-4 gap-1 rounded-xl bg-surface2 p-1" role="radiogroup" aria-label={tr("Priority")}>
             {PRIORITIES.map((p) => (
               <button key={p} type="button" role="radio" aria-checked={draft.priority === p} onClick={() => set("priority", p as Priority)} className={cn("relative h-9 rounded-lg text-[13px] font-medium transition-colors", draft.priority === p ? "text-navy" : "text-muted hover:text-ink")}>
                 {draft.priority === p && <motion.span layoutId={`${idPrefix}-prio`} className={cn("absolute inset-0 rounded-lg shadow", p === "Urgent" ? "bg-danger/90" : p === "High" ? "bg-warning" : "bg-white dark:bg-gold")} transition={{ type: "spring", stiffness: 500, damping: 34 }} />}
-                <span className={cn("relative", draft.priority === p && p === "Urgent" && "text-white")}>{p}</span>
+                <span className={cn("relative", draft.priority === p && p === "Urgent" && "text-white")}>{tr(p)}</span>
               </button>
             ))}
           </div>
         </Field>
       </div>
 
-      <Field label="Client" flag={flags.includes("client")} hint="Optional — link the task to a client record.">
+      <Field label={tr("Client")} flag={flags.includes("client")} hint={tr("Optional — link the task to a client record.")}>
         {candidates.length > 1 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {candidates.map((c) => (
@@ -72,7 +73,7 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
           </div>
         )}
         <Select value={draft.client_id ?? ""} onChange={(e) => set("client_id", e.target.value || null)}>
-          <option value="">No client (personal / admin)</option>
+          <option value="">{tr("No client (personal / admin)")}</option>
           {clients.map((c) => (
             <option key={c.id} value={c.id}>
               {c.full_name}
@@ -84,27 +85,27 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
       <div className={cn("rounded-2xl border p-4 transition-colors", flags.includes("date") || flags.includes("time") ? "border-warning/50 bg-warning/5" : "border-line bg-surface2/50")}>
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-2 text-[13px] font-semibold">
-            <CalendarClock className="size-4 text-goldink" /> When
+            <CalendarClock className="size-4 text-goldink" />{" "}{tr("When")}
           </span>
           <label className="flex cursor-pointer items-center gap-2 text-[13px] text-muted">
-            <input type="checkbox" checked={draft.noDate} onChange={(e) => set("noDate", e.target.checked)} className="size-4 accent-[#c9a86a]" /> No due date
+            <input type="checkbox" checked={draft.noDate} onChange={(e) => set("noDate", e.target.checked)} className="size-4 accent-[#c9a86a]" />{" "}{tr("No due date")}
           </label>
         </div>
         <AnimatePresence initial={false}>
           {!draft.noDate && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
               <div className="grid grid-cols-[1.4fr_1fr] gap-3">
-                <Field label="Date" flag={flags.includes("date")}>
+                <Field label={tr("Date")} flag={flags.includes("date")}>
                   <Input type="date" value={draft.date} onChange={(e) => set("date", e.target.value)} />
                 </Field>
-                <Field label="Time" flag={flags.includes("time")}>
+                <Field label={tr("Time")} flag={flags.includes("time")}>
                   <Input type="time" value={draft.time} onChange={(e) => set("time", e.target.value)} />
                 </Field>
               </div>
               <div className="mt-2.5 flex flex-wrap gap-2">
                 {q.map((d) => (
                   <button key={d.label} type="button" onClick={() => set("date", d.date)} className={cn("rounded-full px-3 py-1 text-xs font-medium ring-1 transition", draft.date === d.date ? "bg-navy text-white ring-navy dark:bg-gold dark:text-navy dark:ring-gold" : "bg-surface ring-line hover:ring-gold/60")}>
-                    {d.label}
+                    {tr(d.label)}
                   </button>
                 ))}
                 {[9, 12, 15, 17].map((h) => (
@@ -119,7 +120,7 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
                     <span className="font-semibold text-ink">{fmt(due, tz, "cccc, d MMMM · HH:mm")}</span> · {tz}
                   </>
                 ) : (
-                  "Pick a date and a time to add this to the calendar."
+                  tr("Pick a date and a time to add this to the calendar.")
                 )}
               </p>
             </motion.div>
@@ -128,37 +129,37 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Duration">
+        <Field label={tr("Duration")}>
           <Select value={draft.duration} onChange={(e) => set("duration", Number(e.target.value))}>
             {[15, 30, 45, 60, 90, 120, 180].map((m) => (
               <option key={m} value={m}>
-                {m < 60 ? `${m} minutes` : `${m / 60} hour${m > 60 ? "s" : ""}`}
+                {m < 60 ? tr("{n} minutes", { n: m }) : tr("{n} h", { n: m / 60 })}
               </option>
             ))}
           </Select>
         </Field>
-        <Field label="Repeat">
+        <Field label={tr("Repeat")}>
           <div className="relative">
             <Repeat className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
-            <Select value={draft.recurrence} onChange={(e) => set("recurrence", e.target.value as Draft["recurrence"])} className="pl-10" disabled={draft.noDate}>
-              <option value="">Doesn't repeat</option>
-              <option value="daily">Every day</option>
-              <option value="weekdays">Every weekday</option>
-              <option value="weekly">Every week</option>
-              <option value="monthly">Every month</option>
+            <Select value={tr(draft.recurrence)} onChange={(e) => set("recurrence", e.target.value as Draft["recurrence"])} className="pl-10" disabled={draft.noDate}>
+              <option value="">{tr("Doesn't repeat")}</option>
+              <option value="daily">{tr("Every day")}</option>
+              <option value="weekdays">{tr("Every weekday")}</option>
+              <option value="weekly">{tr("Every week")}</option>
+              <option value="monthly">{tr("Every month")}</option>
             </Select>
           </div>
         </Field>
       </div>
       {draft.recurrence && (
-        <Field label="Repeat until (optional)">
+        <Field label={tr("Repeat until (optional)")}>
           <Input type="date" value={draft.recurrence_until} onChange={(e) => set("recurrence_until", e.target.value)} />
         </Field>
       )}
 
       <div>
         <span className="mb-2 flex items-center gap-2 text-[13px] font-semibold">
-          <BellRing className="size-4 text-goldink" /> Remind me
+          <BellRing className="size-4 text-goldink" />{" "}{tr("Remind me")}
         </span>
         <div className="flex flex-wrap gap-2">
           {REMINDER_PRESETS.map((p) => {
@@ -166,7 +167,7 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
             return (
               <button key={p.minutes} type="button" onClick={() => toggleOffset(p.minutes)} disabled={draft.noDate} aria-pressed={on} className={cn("rounded-full px-3 py-1.5 text-[13px] font-medium ring-1 transition disabled:opacity-40", on ? "bg-gold/25 text-[#6b5019] ring-gold dark:text-gold2" : "bg-surface ring-line text-muted hover:ring-gold/60")}>
                 {on && <span className="mr-1">✓</span>}
-                {p.label}
+                {tr(p.label)}
               </button>
             );
           })}
@@ -179,14 +180,14 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
             ))}
         </div>
         <div className="mt-2.5 flex items-center gap-2">
-          <Input type="number" min={1} inputMode="numeric" value={custom.n} onChange={(e) => setCustom({ ...custom, n: e.target.value })} placeholder="Custom" className="h-10 w-24" aria-label="Custom reminder amount" />
-          <Select value={custom.unit} onChange={(e) => setCustom({ ...custom, unit: e.target.value })} className="h-10 w-32" aria-label="Unit">
-            <option value="1">minutes</option>
-            <option value="60">hours</option>
-            <option value="1440">days</option>
+          <Input type="number" min={1} inputMode="numeric" value={custom.n} onChange={(e) => setCustom({ ...custom, n: e.target.value })} placeholder={tr("Custom")} className="h-10 w-24" aria-label={tr("Custom reminder amount")} />
+          <Select value={custom.unit} onChange={(e) => setCustom({ ...custom, unit: e.target.value })} className="h-10 w-32" aria-label={tr("Unit")}>
+            <option value="1">{tr("minutes")}</option>
+            <option value="60">{tr("hours")}</option>
+            <option value="1440">{tr("days")}</option>
           </Select>
-          <span className="text-sm text-muted">before</span>
-          <button type="button" onClick={addCustom} className="grid size-10 place-items-center rounded-xl bg-surface2 hover:bg-surface3" aria-label="Add custom reminder">
+          <span className="text-sm text-muted">{tr("before")}</span>
+          <button type="button" onClick={addCustom} className="grid size-10 place-items-center rounded-xl bg-surface2 hover:bg-surface3" aria-label={tr("Add custom reminder")}>
             <Plus className="size-4" />
           </button>
         </div>
@@ -194,22 +195,22 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
           <ul className="mt-3 space-y-1.5 rounded-xl bg-surface2/60 p-3 text-[13px]">
             {planned.map((r) => (
               <li key={r.offset_minutes} className={cn("flex items-center justify-between gap-3", r.in_past && "text-muted line-through")}>
-                <span>{r.label}</span>
-                <span className="tabular text-muted">{r.in_past ? "already passed — skipped" : fmt(r.remind_at, tz, "EEE d MMM · HH:mm")}</span>
+                <span>{tr(r.label)}</span>
+                <span className="tabular text-muted">{r.in_past ? tr("already passed — skipped") : fmt(r.remind_at, tz, "EEE d MMM · HH:mm")}</span>
               </li>
             ))}
           </ul>
         )}
-        {!due && !draft.noDate && <p className="mt-2 text-xs text-muted">Reminders are scheduled once the date and time are set.</p>}
+        {!due && !draft.noDate && <p className="mt-2 text-xs text-muted">{tr("Reminders are scheduled once the date and time are set.")}</p>}
       </div>
 
       {details ? (
-        <Field label="Details">
-          <Textarea value={draft.description} onChange={(e) => set("description", e.target.value)} placeholder="Anything you want to remember…" maxLength={5000} />
+        <Field label={tr("Details")}>
+          <Textarea value={draft.description} onChange={(e) => set("description", e.target.value)} placeholder={tr("Anything you want to remember…")} maxLength={5000} />
         </Field>
       ) : (
         <button type="button" onClick={() => setDetails(true)} className="text-sm font-medium text-goldink hover:underline">
-          + Add details
+          {tr("+ Add details")}
         </button>
       )}
     </div>
@@ -219,7 +220,7 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
 export function WarningList({ items }: { items: string[] }) {
   if (!items.length) return null;
   return (
-    <ul className="space-y-2" aria-label="Things to check">
+    <ul className="space-y-2" aria-label={tr("Things to check")}>
       {items.map((w) => (
         <motion.li key={w} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="flex gap-2.5 rounded-xl bg-warning/10 px-3.5 py-2.5 text-[13px] text-[#7a520c] ring-1 ring-warning/30 dark:text-[#f0c36d]">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />

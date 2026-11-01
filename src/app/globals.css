@@ -4,8 +4,8 @@
 
 /* ───────────────────────── Design tokens ───────────────────────── */
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-sans: "Inter Variable", "Noto Sans Armenian", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Cormorant Garamond", "Noto Serif Armenian", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
 
   /* Brand palette (from the brand brief) */
   --color-navy: #0b1426;
@@ -369,4 +369,10 @@ textarea {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Armenian capitals with wide tracking are hard to read: keep small labels in normal case with gentle spacing. */
+:lang(hy) .uppercase {
+  text-transform: none;
+  letter-spacing: 0.02em;
 }

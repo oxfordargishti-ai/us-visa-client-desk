@@ -10,8 +10,9 @@ import { useApp } from "./app-context";
 import { api, ApiError, upload } from "@/lib/client/api";
 import { DOCUMENT_CATEGORIES } from "@/lib/constants";
 import { ago, bytes } from "@/lib/client/format";
-import { useDebounced } from "@/lib/client/hooks";
+import { useDebounced, useCreateIntent } from "@/lib/client/hooks";
 import type { DocumentRow } from "@/lib/types";
+import { tr } from "@/lib/i18n";
 
 export function DocumentsView({ documents, clients, missing, filters }: { documents: DocumentRow[]; clients: { id: string; full_name: string }[]; missing: { client_id: string; full_name: string; labels: string[] }[]; filters: { client: string; category: string; q: string } }) {
   const app = useApp();
@@ -20,6 +21,7 @@ export function DocumentsView({ documents, clients, missing, filters }: { docume
   const [q, setQ] = React.useState(filters.q);
   const dq = useDebounced(q, 300);
   const [open, setOpen] = React.useState(false);
+  useCreateIntent("document", () => setOpen(true));
   const [preview, setPreview] = React.useState<DocumentRow | null>(null);
   const first = React.useRef(true);
 
@@ -41,10 +43,10 @@ export function DocumentsView({ documents, clients, missing, filters }: { docume
     <Stagger className="space-y-6">
       <Rise className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink"><Lock className="size-3" /> Private · signed access only</p>
-          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">Documents</h1>
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink"><Lock className="size-3" />{" "}{tr("Private · signed access only")}</p>
+          <h1 className="mt-1 font-display text-4xl font-semibold sm:text-5xl">{tr("Documents")}</h1>
         </div>
-        <Button variant="gold" size="lg" className="self-start" onClick={() => setOpen(true)}><Upload className="size-4" /> Upload</Button>
+        <Button variant="gold" size="lg" className="self-start" onClick={() => setOpen(true)}><Upload className="size-4" />{" "}{tr("Upload")}</Button>
       </Rise>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
@@ -52,15 +54,15 @@ export function DocumentsView({ documents, clients, missing, filters }: { docume
           <Rise className="flex flex-col gap-3 md:flex-row">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search file names, notes, clients…" aria-label="Search documents" className="h-12 w-full rounded-2xl border border-linestrong bg-surface pl-11 pr-4 text-[15px] shadow-soft focus:border-gold focus:outline-none focus:ring-4 focus:ring-gold/20" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr("Search file names, notes, clients…")} aria-label={tr("Search documents")} className="h-12 w-full rounded-2xl border border-linestrong bg-surface pl-11 pr-4 text-[15px] shadow-soft focus:border-gold focus:outline-none focus:ring-4 focus:ring-gold/20" />
             </div>
-            <Select value={filters.client} onChange={(e) => go({ client: e.target.value })} className="h-12 md:w-52" aria-label="Client"><option value="">All clients</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}</Select>
-            <Select value={filters.category} onChange={(e) => go({ category: e.target.value })} className="h-12 md:w-48" aria-label="Category"><option value="">All categories</option>{DOCUMENT_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</Select>
+            <Select value={filters.client} onChange={(e) => go({ client: e.target.value })} className="h-12 md:w-52" aria-label={tr("Client")}><option value="">{tr("All clients")}</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}</Select>
+            <Select value={tr(filters.category)} onChange={(e) => go({ category: e.target.value })} className="h-12 md:w-48" aria-label={tr("Category")}><option value="">{tr("All categories")}</option>{DOCUMENT_CATEGORIES.map((c) => <option key={c} value={c}>{tr(c)}</option>)}</Select>
           </Rise>
           <Rise>
             <Card className="p-3 sm:p-4">
               {documents.length === 0 ? (
-                <EmptyState icon={<FolderLock className="size-6" />} title="No documents found" body="Upload passports, DS-160 confirmations and supporting files. They're stored privately and only reachable through this signed-in desk." action={<Button variant="gold" size="sm" onClick={() => setOpen(true)}><Upload className="size-4" /> Upload a document</Button>} />
+                <EmptyState icon={<FolderLock className="size-6" />} title={tr("No documents found")} body={tr("Upload passports, DS-160 confirmations and supporting files. They're stored privately and only reachable through this signed-in desk.")} action={<Button variant="gold" size="sm" onClick={() => setOpen(true)}><Upload className="size-4" />{" "}{tr("Upload a document")}</Button>} />
               ) : (
                 <ul className="space-y-1.5">
                   <AnimatePresence initial={false}>
@@ -71,12 +73,12 @@ export function DocumentsView({ documents, clients, missing, filters }: { docume
                           <p className="truncate text-sm font-medium">{d.filename}</p>
                           <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
                             <Link href={`/clients/${d.client_id}?tab=documents`} className="font-medium text-goldink hover:underline">{d.client_name}</Link>
-                            <span>· {d.category}</span><span>· {bytes(d.size_bytes)}</span><span>· {ago(d.uploaded_at)}</span>
+                            <span>· {tr(d.category)}</span><span>· {bytes(d.size_bytes)}</span><span>· {ago(d.uploaded_at)}</span>
                           </p>
                         </div>
-                        {["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(d.mime_type) && <IconButton label="Preview" onClick={() => setPreview(d)} className="size-9"><Eye className="size-4" /></IconButton>}
+                        {["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(d.mime_type) && <IconButton label={tr("Preview")} onClick={() => setPreview(d)} className="size-9"><Eye className="size-4" /></IconButton>}
                         <a href={`/api/documents/${d.id}/download`} aria-label={`Download ${d.filename}`} className="grid size-9 place-items-center rounded-xl hover:bg-surface3"><Download className="size-4" /></a>
-                        <IconButton label="Delete" className="size-9 text-danger" onClick={async () => { if (!confirm(`Permanently delete ${d.filename}?`)) return; try { await api(`/api/documents/${d.id}`, { method: "DELETE" }); app.bumpData(); } catch (e) { toast({ tone: "error", title: "Couldn't delete", body: e instanceof ApiError ? e.message : undefined }); } }}><Trash2 className="size-4" /></IconButton>
+                        <IconButton label={tr("Delete")} className="size-9 text-danger" onClick={async () => { if (!confirm(tr("Permanently delete {name}?", { name: d.filename }))) return; try { await api(`/api/documents/${d.id}`, { method: "DELETE" }); app.bumpData(); } catch (e) { toast({ tone: "error", title: tr("Couldn't delete"), body: e instanceof ApiError ? e.message : undefined }); } }}><Trash2 className="size-4" /></IconButton>
                       </motion.li>
                     ))}
                   </AnimatePresence>
@@ -88,9 +90,9 @@ export function DocumentsView({ documents, clients, missing, filters }: { docume
 
         <Rise className="lg:col-span-4">
           <Card className="p-5 lg:sticky lg:top-24">
-            <h2 className="mb-1 flex items-center gap-2 text-[15px] font-semibold"><FileWarning className="size-4 text-warning" /> Missing documents</h2>
-            <p className="mb-3 text-xs text-muted">Required checklist items still outstanding, for active cases.</p>
-            {missing.length === 0 ? <p className="py-6 text-center text-sm text-muted">Nothing missing. 🎉</p> : (
+            <h2 className="mb-1 flex items-center gap-2 text-[15px] font-semibold"><FileWarning className="size-4 text-warning" />{" "}{tr("Missing documents")}</h2>
+            <p className="mb-3 text-xs text-muted">{tr("Required checklist items still outstanding, for active cases.")}</p>
+            {missing.length === 0 ? <p className="py-6 text-center text-sm text-muted">{tr("Nothing missing. 🎉")}</p> : (
               <ul className="space-y-1.5">
                 {missing.map((m) => (
                   <li key={m.client_id}>
@@ -107,7 +109,7 @@ export function DocumentsView({ documents, clients, missing, filters }: { docume
       </div>
 
       <UploadModal open={open} onClose={() => setOpen(false)} clients={clients} defaultClient={filters.client} />
-      <Modal open={Boolean(preview)} onClose={() => setPreview(null)} title={preview?.filename} subtitle={preview ? `${preview.category} · ${preview.client_name}` : undefined} size="xl">
+      <Modal open={Boolean(preview)} onClose={() => setPreview(null)} title={preview?.filename} subtitle={preview ? `${tr(preview.category)} · ${preview.client_name}` : undefined} size="xl">
         {preview && (preview.mime_type === "application/pdf" ? <iframe title={preview.filename} src={`/api/documents/${preview.id}/download?inline=1`} className="h-[70dvh] w-full rounded-2xl border border-line bg-white" /> : /* eslint-disable-next-line @next/next/no-img-element */ <img src={`/api/documents/${preview.id}/download?inline=1`} alt={preview.filename} className="mx-auto max-h-[70dvh] rounded-2xl" />)}
       </Modal>
     </Stagger>
@@ -133,20 +135,20 @@ function UploadModal({ open, onClose, clients, defaultClient }: { open: boolean;
       try { await upload("/api/documents", fd, app.caps.maxUploadMb ?? 15); ok++; } catch (e) { toast({ tone: "error", title: `${f.name} wasn't saved`, body: e instanceof ApiError ? e.message : undefined }); }
     }
     setBusy(false);
-    if (ok) { toast({ tone: "success", title: `${ok} document${ok > 1 ? "s" : ""} stored privately` }); app.bumpData(); onClose(); }
+    if (ok) { toast({ tone: "success", title: tr("{n} documents stored privately", { n: ok }) }); app.bumpData(); onClose(); }
   }
   return (
-    <Modal open={open} onClose={onClose} title="Upload documents" subtitle="Files are stored privately and linked to the client you choose." footer={<><Button variant="outline" onClick={onClose}>Cancel</Button><Button variant="gold" loading={busy} disabled={!client || !files.length} onClick={go}><Upload className="size-4" /> Upload {files.length || ""}</Button></>}>
+    <Modal open={open} onClose={onClose} title={tr("Upload documents")} subtitle={tr("Files are stored privately and linked to the client you choose.")} footer={<><Button variant="outline" onClick={onClose}>{tr("Cancel")}</Button><Button variant="gold" loading={busy} disabled={!client || !files.length} onClick={go}><Upload className="size-4" />{" "}{tr("Upload")}{" "}{files.length || ""}</Button></>}>
       <div className="space-y-4">
-        <Field label="Client"><Select value={client} onChange={(e) => setClient(e.target.value)} data-autofocus><option value="">Choose a client…</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}</Select></Field>
-        <Field label="Category"><Select value={cat} onChange={(e) => setCat(e.target.value)}>{DOCUMENT_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</Select></Field>
+        <Field label={tr("Client")}><Select value={client} onChange={(e) => setClient(e.target.value)} data-autofocus><option value="">{tr("Choose a client…")}</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}</Select></Field>
+        <Field label={tr("Category")}><Select value={cat} onChange={(e) => setCat(e.target.value)}>{DOCUMENT_CATEGORIES.map((c) => <option key={c} value={c}>{tr(c)}</option>)}</Select></Field>
         <div onDragOver={(e) => (e.preventDefault(), setDrag(true))} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); setFiles([...files, ...Array.from(e.dataTransfer.files)]); }} className={cn("rounded-2xl border-2 border-dashed p-6 text-center transition", drag ? "border-gold bg-gold/10" : "border-linestrong")}>
           <Upload className="mx-auto mb-2 size-6 text-goldink" />
-          <p className="text-sm font-medium">Drop files here or <button type="button" className="font-semibold text-goldink underline" onClick={() => ref.current?.click()}>browse</button></p>
-          <p className="mt-1 text-xs text-muted">PDF, JPG, PNG, WEBP, HEIC, DOCX · max {app.caps.maxUploadMb ?? 15} MB each</p>
+          <p className="text-sm font-medium">{tr("Drop files here or")}{" "}<button type="button" className="font-semibold text-goldink underline" onClick={() => ref.current?.click()}>{tr("browse")}</button></p>
+          <p className="mt-1 text-xs text-muted">{tr("PDF, JPG, PNG, WEBP, HEIC, DOCX · max")}{" "}{app.caps.maxUploadMb ?? 15}{" "}{tr("MB each")}</p>
           <input ref={ref} type="file" multiple hidden accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.docx,.txt" onChange={(e) => { setFiles([...files, ...Array.from(e.target.files ?? [])]); e.target.value = ""; }} />
         </div>
-        {files.length > 0 && <ul className="space-y-1.5">{files.map((f, i) => <li key={i} className="flex items-center justify-between rounded-xl bg-surface2 px-3 py-2 text-sm"><span className="truncate">{f.name}</span><button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="ml-3 text-xs font-semibold text-danger">Remove</button></li>)}</ul>}
+        {files.length > 0 && <ul className="space-y-1.5">{files.map((f, i) => <li key={i} className="flex items-center justify-between rounded-xl bg-surface2 px-3 py-2 text-sm"><span className="truncate">{f.name}</span><button onClick={() => setFiles(files.filter((_, j) => j !== i))} className="ml-3 text-xs font-semibold text-danger">{tr("Remove")}</button></li>)}</ul>}
       </div>
     </Modal>
   );

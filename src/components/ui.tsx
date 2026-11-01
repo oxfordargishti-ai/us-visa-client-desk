@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { AnimatePresence, animate, motion, useMotionValue, useTransform, type HTMLMotionProps, type Variants } from "motion/react";
 import { Check, Loader2, X, AlertTriangle, Info, CircleCheck } from "lucide-react";
 import { initials } from "@/lib/client/format";
+import { tr } from "@/lib/i18n";
 
 export const cn = clsx;
 
@@ -110,8 +111,8 @@ export function SectionTitle({ icon, title, action, sub }: { icon?: React.ReactN
       <div className="flex items-center gap-2.5">
         {icon && <span className="grid size-8 place-items-center rounded-lg bg-gold/15 text-goldink">{icon}</span>}
         <div>
-          <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
-          {sub && <p className="text-xs text-muted">{sub}</p>}
+          <h2 className="text-[15px] font-semibold tracking-tight">{tr(title)}</h2>
+          {sub && <p className="text-xs text-muted">{tr(sub)}</p>}
         </div>
       </div>
       {action}
@@ -159,8 +160,8 @@ export function EmptyState({ icon, title, body, action }: { icon: React.ReactNod
       <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 260, damping: 18 }} className="mb-4 grid size-14 place-items-center rounded-2xl bg-gold/15 text-goldink">
         {icon}
       </motion.div>
-      <p className="font-display text-xl font-semibold">{title}</p>
-      {body && <p className="mt-1 max-w-sm text-sm text-muted">{body}</p>}
+      <p className="font-display text-xl font-semibold">{tr(title)}</p>
+      {body && <p className="mt-1 max-w-sm text-sm text-muted">{tr(body)}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -185,12 +186,12 @@ export function Field({ label, hint, error, children, className, flag }: { label
   return (
     <label className={cn("block", className)}>
       <span className="mb-1.5 flex items-center gap-2 text-[13px] font-medium text-ink/80">
-        {label}
-        {flag && <span className="rounded-full bg-warning/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#8a5f10] dark:text-[#f0c36d]">Please check</span>}
+        {tr(label)}
+        {flag && <span className="rounded-full bg-warning/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#8a5f10] dark:text-[#f0c36d]">{tr("Please check")}</span>}
       </span>
       {children}
-      {hint && !error && <span className="mt-1 block text-xs text-muted">{hint}</span>}
-      {error && <span className="mt-1 block text-xs text-danger">{error}</span>}
+      {hint && !error && <span className="mt-1 block text-xs text-muted">{tr(hint)}</span>}
+      {error && <span className="mt-1 block text-xs text-danger">{tr(error)}</span>}
     </label>
   );
 }
@@ -223,7 +224,7 @@ export function Segmented<T extends string>({ options, value, onChange, id, clas
           className={cn("relative z-10 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-medium transition-colors", value === o.value ? "text-navy dark:text-navy" : "text-muted hover:text-ink")}
         >
           {value === o.value && <motion.span layoutId={`seg-${id}`} className="absolute inset-0 -z-10 rounded-xl bg-white shadow-md dark:bg-gold" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
-          {o.label}
+          {typeof o.label === "string" ? tr(o.label) : o.label}
         </button>
       ))}
     </div>
@@ -276,7 +277,7 @@ export function Modal({ open, onClose, title, children, size = "md", footer, sub
             ref={ref}
             role="dialog"
             aria-modal="true"
-            aria-label={title}
+            aria-label={title ? tr(title) : undefined}
             initial={{ opacity: 0, y: 48, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 32, scale: 0.98 }}
@@ -287,10 +288,10 @@ export function Modal({ open, onClose, title, children, size = "md", footer, sub
             {!hideHeader && (
               <div className="flex items-start justify-between gap-4 px-6 pb-2 pt-4 md:pt-6">
                 <div>
-                  {title && <h2 className="font-display text-2xl font-semibold leading-tight">{title}</h2>}
-                  {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
+                  {title && <h2 className="font-display text-2xl font-semibold leading-tight">{tr(title)}</h2>}
+                  {subtitle && <p className="mt-0.5 text-sm text-muted">{tr(subtitle)}</p>}
                 </div>
-                <IconButton label="Close" onClick={onClose} className="-mr-2 -mt-1">
+                <IconButton label={tr("Close")} onClick={onClose} className="-mr-2 -mt-1">
                   <X className="size-5" />
                 </IconButton>
               </div>
@@ -329,7 +330,7 @@ export function Drawer({ open, onClose, title, children, footer, subtitle }: { o
                 <h2 className="truncate font-display text-2xl font-semibold leading-tight">{title}</h2>
                 {subtitle && <p className="mt-0.5 truncate text-sm text-muted">{subtitle}</p>}
               </div>
-              <IconButton label="Close" onClick={onClose} className="-mr-2">
+              <IconButton label={tr("Close")} onClick={onClose} className="-mr-2">
                 <X className="size-5" />
               </IconButton>
             </div>
@@ -384,7 +385,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 {t.tone === "success" ? <CircleCheck className="size-4" /> : t.tone === "error" ? <AlertTriangle className="size-4" /> : <Info className="size-4" />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{t.title}</p>
+                <p className="truncate text-sm font-semibold">{tr(t.title)}</p>
                 {t.body && <p className="line-clamp-2 text-xs text-white/70">{t.body}</p>}
               </div>
               {t.action && (
@@ -491,14 +492,14 @@ export function Logo({ className, plate = true }: { className?: string; plate?: 
   // The supplied logo, unaltered — only cropped and resized. It lives on a white plate so its native background reads as intentional.
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src="/brand/logo-320.png" srcSet="/brand/logo-320.png 1x, /brand/logo-640.png 2x" alt="US VISA WITH ARGISHTI" className={cn(plate && "rounded-2xl bg-white", className)} draggable={false} />
+    <img src="/brand/logo-320.png" srcSet="/brand/logo-320.png 1x, /brand/logo-640.png 2x" alt={tr("US VISA WITH ARGISHTI")} className={cn(plate && "rounded-2xl bg-white", className)} draggable={false} />
   );
 }
 
 export function Disclaimer({ className }: { className?: string }) {
   return (
     <p className={cn("text-[11px] leading-relaxed text-muted", className)}>
-      US VISA WITH ARGISHTI is an independent visa application support service. It is not affiliated with the U.S. government, and nothing here is legal advice or a guarantee of visa approval.
+      {tr("US VISA WITH ARGISHTI is an independent visa application support service. It is not affiliated with the U.S. government, and nothing here is legal advice or a guarantee of visa approval.")}
     </p>
   );
 }

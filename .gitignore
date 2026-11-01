@@ -8,3 +8,4 @@ node_modules
 next-env.d.ts
 coverage
 storage-local
+e2e-output

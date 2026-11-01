@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "../i18n";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public code?: string) {
@@ -26,7 +27,7 @@ export async function api<T = unknown>(url: string, opts: { method?: string; bod
     if (res.status === 401 && !url.startsWith("/api/auth/login")) {
       window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     }
-    throw new ApiError(res.status, d?.error ?? "Something went wrong. Please try again.", d?.code);
+    throw new ApiError(res.status, tr(d?.error ?? "Something went wrong. Please try again."), d?.code);
   }
   return data as T;
 }
@@ -34,12 +35,12 @@ export async function api<T = unknown>(url: string, opts: { method?: string; bod
 export async function upload<T = unknown>(url: string, form: FormData, maxMb = 15): Promise<T> {
   for (const v of form.values()) {
     if (v instanceof File && v.size > maxMb * 1024 * 1024) {
-      throw new ApiError(413, `${v.name} is ${(v.size / 1048576).toFixed(1)} MB — the limit is ${maxMb} MB. Compress it or split the PDF and try again.`, "too_large");
+      throw new ApiError(413, tr("{name} is {size} MB — the limit is {max} MB. Compress it or split the PDF and try again.", { name: v.name, size: (v.size / 1048576).toFixed(1), max: maxMb }), "too_large");
     }
   }
   const res = await fetch(url, { method: "POST", body: form, credentials: "same-origin" });
-  if (res.status === 413) throw new ApiError(413, `That file is too large — the limit is ${maxMb} MB. Compress it or split the PDF and try again.`, "too_large");
+  if (res.status === 413) throw new ApiError(413, tr("That file is too large — the limit is {max} MB. Compress it or split the PDF and try again.", { max: maxMb }), "too_large");
   const data = (await res.json().catch(() => null)) as { error?: string; code?: string } | null;
-  if (!res.ok) throw new ApiError(res.status, data?.error ?? "Upload failed. Please try again.", data?.code);
+  if (!res.ok) throw new ApiError(res.status, tr(data?.error ?? "Upload failed. Please try again."), data?.code);
   return data as T;
 }
