@@ -89,14 +89,37 @@ export async function getAccessToken(userId: string): Promise<string> {
   }
 }
 
+type GoogleErrorBody = { error?: { message?: string; status?: string; details?: { reason?: string; metadata?: { service?: string } }[]; errors?: { reason?: string }[] } };
+
+/** Turns Google's 403 into a plain-language next step. Google uses 403 for several different problems. */
+export function explainGoogle403(body: GoogleErrorBody): { code: string; message: string } {
+  const e = body.error ?? {};
+  const reasons = [...(e.details ?? []).map((d) => d.reason), ...(e.errors ?? []).map((d) => d.reason)].filter(Boolean) as string[];
+  const msg = e.message ?? "";
+  if (reasons.some((r) => /SERVICE_DISABLED|accessNotConfigured/i.test(r)) || /has not been used in project|is disabled/i.test(msg)) {
+    const api = /calendar/i.test(msg + JSON.stringify(e.details ?? [])) ? "Google Calendar API" : "Gmail API";
+    return { code: "google_api_disabled", message: `The ${api} is not turned on in your Google Cloud project. Open console.cloud.google.com → APIs & Services → Library, enable the ${api}, wait 2–3 minutes and try again.` };
+  }
+  if (reasons.some((r) => /SCOPE_INSUFFICIENT|insufficientPermissions/i.test(r))) {
+    return { code: "google_scope", message: "Google says this permission was not granted. Disconnect, connect again and tick every box on the consent screen." };
+  }
+  if (/admin|domain policy|organization/i.test(msg)) {
+    return { code: "google_admin_blocked", message: "Your Google Workspace admin settings are blocking this app. In admin.google.com → Security → API controls, allow the app, then connect again." };
+  }
+  return { code: "google_forbidden", message: `Google refused the request: ${msg.slice(0, 200) || "permission denied"}` };
+}
+
 async function gfetch<T>(userId: string, url: string, init: RequestInit = {}): Promise<T> {
   const token = await getAccessToken(userId);
   const res = await fetch(url, { ...init, headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...(init.headers || {}) } });
   if (res.status === 204) return undefined as T;
-  const json = (await res.json().catch(() => ({}))) as T & { error?: { message?: string; status?: string } };
+  const json = (await res.json().catch(() => ({}))) as T & GoogleErrorBody;
   if (!res.ok) {
     if (res.status === 401) accessCache.delete(userId);
-    if (res.status === 403 && json.error?.status === "PERMISSION_DENIED") throw new HttpError(403, "Google says this permission was not granted. Reconnect and tick every box on the consent screen.", "google_scope");
+    if (res.status === 403) {
+      const why = explainGoogle403(json);
+      throw new HttpError(403, why.message, why.code);
+    }
     throw new HttpError(res.status === 404 ? 404 : 502, res.status === 404 ? "Not found in Google." : `Google API error (${res.status}).`, "google_error", { status: res.status });
   }
   return json;
