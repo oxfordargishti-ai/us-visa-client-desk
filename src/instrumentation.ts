@@ -4,7 +4,7 @@
 //   OWNER_EMAIL / OWNER_INITIAL_PASSWORD when no account exists yet (so no terminal is needed). Or run `npm run db:migrate` yourself.
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
-  const local = !process.env.DATABASE_URL && process.env.NODE_ENV !== "production";
+  const local = !process.env.DATABASE_URL && !process.env.POSTGRES_URL && process.env.NODE_ENV !== "production";
   if (local || process.env.AUTO_MIGRATE === "true") {
     try {
       const { runMigrations } = await import("./lib/db/migrate");

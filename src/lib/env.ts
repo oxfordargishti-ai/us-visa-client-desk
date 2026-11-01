@@ -12,7 +12,8 @@ export const env = {
     return (process.env.APP_URL || (vercel ? `https://${vercel}` : "http://localhost:3000")).replace(/\/$/, "");
   },
   get databaseUrl() {
-    return process.env.DATABASE_URL || "";
+    // DATABASE_URL is the standard name; POSTGRES_URL is what some hosting integrations (e.g. Vercel + Neon) also set.
+    return process.env.DATABASE_URL || process.env.POSTGRES_URL || "";
   },
   get pgliteDir() {
     return process.env.PGLITE_DIR || ""; // "" → in-memory (tests) or .data/pglite (dev)
