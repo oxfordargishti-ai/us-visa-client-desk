@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { env } from "@/lib/env";
+import { env, findDatabaseUrl } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +16,10 @@ export async function GET() {
   const steps: { step: string; ok: boolean; detail: string }[] = [];
   const add = (step: string, ok: boolean, detail: string) => steps.push({ step, ok, detail });
 
-  const dbVars = ["DATABASE_URL", "POSTGRES_URL"].filter((k) => process.env[k]);
-  add("Database address set", dbVars.length > 0, dbVars.length ? `Found ${dbVars.join(", ")}` : "No DATABASE_URL — connect a Neon database to this project, then redeploy");
+  const found = findDatabaseUrl().name;
+  const dbVars = found ? [found] : [];
+  const related = Object.keys(process.env).filter((k) => /DATABASE|POSTGRES|^PG|NEON/.test(k)).sort();
+  add("Database address set", dbVars.length > 0, dbVars.length ? `Found ${found}` : `No database address found — connect a Neon database to this project, then redeploy. Related settings present: ${related.join(", ") || "none"}`);
   add("Encryption key set", env.encryptionKey.length > 0, env.encryptionKey ? "OK" : "ENCRYPTION_KEY is missing");
 
   if (dbVars.length) {

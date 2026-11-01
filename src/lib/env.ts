@@ -13,7 +13,7 @@ export const env = {
   },
   get databaseUrl() {
     // DATABASE_URL is the standard name; POSTGRES_URL is what some hosting integrations (e.g. Vercel + Neon) also set.
-    return process.env.DATABASE_URL || process.env.POSTGRES_URL || "";
+    return process.env.DATABASE_URL || process.env.POSTGRES_URL || findDatabaseUrl().value;
   },
   get pgliteDir() {
     return process.env.PGLITE_DIR || ""; // "" → in-memory (tests) or .data/pglite (dev)
@@ -88,3 +88,16 @@ export const capabilities = () => ({
   googleLogin: env.googleLoginEnabled && Boolean(env.googleClientId && env.googleClientSecret),
   storage: env.storage.driver,
 });
+
+/**
+ * Hosting integrations sometimes add a prefix to the variable names (e.g. STORAGE_DATABASE_URL, MY_POSTGRES_URL).
+ * Finds the first variable whose name ends in DATABASE_URL / POSTGRES_URL / _URL and whose value is a postgres:// address.
+ */
+export function findDatabaseUrl(): { name: string; value: string } {
+  const isPg = (v?: string) => !!v && /^postgres(ql)?:\/\//i.test(v);
+  for (const k of ["DATABASE_URL", "POSTGRES_URL"]) if (isPg(process.env[k])) return { name: k, value: process.env[k]! };
+  const names = Object.keys(process.env).sort();
+  const pick = (re: RegExp) => names.find((k) => re.test(k) && !/UNPOOLED|NON_POOLING|NO_SSL/.test(k) && isPg(process.env[k]));
+  const name = pick(/DATABASE_URL$/) || pick(/POSTGRES_URL$/) || pick(/_URL$/) || "";
+  return { name, value: name ? process.env[name]! : "" };
+}
