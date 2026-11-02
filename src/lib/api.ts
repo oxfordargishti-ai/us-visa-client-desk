@@ -52,7 +52,7 @@ export interface Ctx<B, P> {
 type Opts<S extends z.ZodType | undefined> = {
   schema?: S;
   /** "user" (default) requires a session; "cron" requires Authorization: Bearer CRON_SECRET; "none" is public. */
-  auth?: "user" | "cron" | "none";
+  auth?: "user" | "cron" | "intake" | "none";
 };
 
 /** Wraps a route handler with auth, CSRF protection, JSON/zod validation and uniform error responses. */
@@ -67,6 +67,11 @@ export function handler<S extends z.ZodType | undefined = undefined, P extends R
       if (mode === "cron") {
         const auth = req.headers.get("authorization") || "";
         if (!env.cronSecret || !safeEqual(auth, `Bearer ${env.cronSecret}`)) throw new HttpError(401, "Unauthorized", "unauthorized");
+      } else if (mode === "intake") {
+        // Server-to-server from the DS-160 form site: a long shared secret instead of a browser session.
+        const secret = process.env.INTAKE_SECRET || "";
+        const auth = req.headers.get("authorization") || "";
+        if (secret.length < 24 || !safeEqual(auth, `Bearer ${secret}`)) throw new HttpError(401, "Unauthorized", "unauthorized");
       } else {
         assertSameOrigin(req);
         if (mode === "user") {

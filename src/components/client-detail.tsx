@@ -19,6 +19,7 @@ import { SPEECH_LANGS, useSpeech } from "@/lib/client/hooks";
 import type { getClientDetail } from "@/lib/repo/clients";
 import { tr } from "@/lib/i18n";
 import { ClientMessagesCard } from "./client-messages";
+import { IntakeCard } from "./intake-card";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof getClientDetail>>>;
 const TABS = [
@@ -126,6 +127,7 @@ export function ClientDetail({ detail, tz, defaults, initialTab }: { detail: Det
           {tab === "overview" && kase && (
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
               <div className="space-y-5 lg:col-span-7">
+                <IntakeCard clientId={client.id} />
                 <CaseCard kase={kase} cases={cases} setCaseId={setCaseId} clientId={client.id} />
                 <Card className="p-5">
                   <div className="mb-3 flex items-center justify-between">
