@@ -188,8 +188,8 @@ export function QuickAdd({ open, onClose, prefill }: { open: boolean; onClose: (
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {EXAMPLES.map((ex) => (
-                    <button key={ex} type="button" onClick={() => setText(ex)} className="max-w-full truncate rounded-full bg-surface2 px-3 py-1.5 text-xs text-muted ring-1 ring-line transition hover:text-ink hover:ring-gold/60">
-                      {ex}
+                    <button key={ex} type="button" onClick={() => setText(tr(ex))} className="max-w-full truncate rounded-full bg-surface2 px-3 py-1.5 text-xs text-muted ring-1 ring-line transition hover:text-ink hover:ring-gold/60">
+                      {tr(ex)}
                     </button>
                   ))}
                 </div>

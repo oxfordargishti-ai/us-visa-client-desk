@@ -386,7 +386,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{tr(t.title)}</p>
-                {t.body && <p className="line-clamp-2 text-xs text-white/70">{t.body}</p>}
+                {t.body && <p className="line-clamp-2 text-xs text-white/70">{tr(t.body)}</p>}
               </div>
               {t.action && (
                 <button

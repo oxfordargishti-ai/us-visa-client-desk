@@ -13,6 +13,7 @@ import { useNow } from "@/lib/client/hooks";
 import { CATEGORY_COLORS } from "@/lib/constants";
 import type { DashboardData } from "@/lib/repo/dashboard";
 import { tr } from "@/lib/i18n";
+import { Aurora, Seal3D, Tilt3D } from "./fx";
 
 export function DashboardView({ data, greeting, dateLine }: { data: DashboardData; greeting: string; dateLine: string }) {
   const app = useApp();
@@ -24,10 +25,11 @@ export function DashboardView({ data, greeting, dateLine }: { data: DashboardDat
   return (
     <Stagger className="space-y-6">
       {/* greeting */}
-      <Rise className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <Rise className="relative isolate flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <Aurora className="-top-10 inset-x-0" />
         <div>
-          <Link href="/dashboard" aria-label={tr("US VISA WITH ARGISHTI")} className="mb-5 block w-28 overflow-hidden rounded-3xl bg-white p-1 shadow-lg ring-1 ring-gold/50 lg:hidden">
-            <Logo plate={false} className="w-full rounded-[18px]" />
+          <Link href="/dashboard" aria-label={tr("US VISA WITH ARGISHTI")} className="mb-5 block lg:hidden">
+            <Seal3D size={104} />
           </Link>
           <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-goldink">{tr("My Command Center")}</p>
           <h1 className="mt-1 font-display text-[2.4rem] font-semibold leading-[1.05] sm:text-5xl">
@@ -49,10 +51,14 @@ export function DashboardView({ data, greeting, dateLine }: { data: DashboardDat
       {/* hero row */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <Rise className="lg:col-span-7">
-          <NextUp data={data} />
+          <Tilt3D className="h-full rounded-[28px]" max={7}>
+            <NextUp data={data} />
+          </Tilt3D>
         </Rise>
         <Rise className="lg:col-span-5">
-          <TodayCard data={data} done={doneToday} total={todayTotal} />
+          <Tilt3D className="h-full rounded-[28px]" max={6}>
+            <TodayCard data={data} done={doneToday} total={todayTotal} />
+          </Tilt3D>
         </Rise>
       </div>
 
@@ -76,7 +82,7 @@ export function DashboardView({ data, greeting, dateLine }: { data: DashboardDat
               <Card className="overflow-hidden border-danger/30">
                 <div className="h-1 bg-gradient-to-r from-danger via-[#e8788a] to-danger" />
                 <div className="p-5">
-                  <SectionTitle icon={<AlertTriangle className="size-4 text-danger" />} title={`Overdue · ${data.overdue.length}`} sub="Finish, move or snooze these first" action={<Link href="/tasks?view=overdue" className="text-sm font-medium text-goldink hover:underline">{tr("View all")}</Link>} />
+                  <SectionTitle icon={<AlertTriangle className="size-4 text-danger" />} title={`${tr("Overdue")} · ${data.overdue.length}`} sub="Finish, move or snooze these first" action={<Link href="/tasks?view=overdue" className="text-sm font-medium text-goldink hover:underline">{tr("View all")}</Link>} />
                   <ul className="-mx-3">
                     <AnimatePresence initial={false}>
                       {data.overdue.slice(0, 4).map((t) => (

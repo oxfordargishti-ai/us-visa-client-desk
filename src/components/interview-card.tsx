@@ -15,7 +15,7 @@ import { tr } from "@/lib/i18n";
 export function countdownLabel(iso: string, now: Date | null) {
   if (!now) return { big: "—", small: "", past: false, frac: 0 };
   const c = humanCountdown(iso, now);
-  if (c.past) return { big: Math.abs(c.totalMs) < 3 * 3600_000 ? "Now" : "Past", small: "", past: true, frac: 1 };
+  if (c.past) return { big: Math.abs(c.totalMs) < 3 * 3600_000 ? tr("Now") : tr("Past"), small: "", past: true, frac: 1 };
   const frac = 1 - Math.min(1, c.totalMs / (7 * 86_400_000));
   if (c.days >= 1) return { big: `${c.days}d`, small: `${c.hours}h`, past: false, frac };
   if (c.hours >= 1) return { big: `${c.hours}h`, small: `${c.minutes}m`, past: false, frac };

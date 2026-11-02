@@ -4,7 +4,9 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { Eye, EyeOff, ShieldCheck, CalendarClock, BellRing, FolderLock, Sparkles, ArrowRight, Check } from "lucide-react";
-import { Button, Disclaimer, EASE, Field, Input, Logo } from "./ui";
+import { Button, Disclaimer, EASE, Field, Input } from "./ui";
+import { Seal3D } from "./fx";
+import { LanguagePills } from "./language-switcher";
 import { api, ApiError } from "@/lib/client/api";
 import { tr } from "@/lib/i18n";
 
@@ -57,6 +59,9 @@ export function LoginScreen({ next, error, googleEnabled }: { next: string; erro
 
   return (
     <main className="hero-navy noise relative isolate min-h-dvh overflow-hidden">
+      <div className="safe-top absolute right-4 top-4 z-20">
+        <LanguagePills dark />
+      </div>
       {/* ambient background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="animate-float absolute -left-24 top-[-10%] size-[520px] rounded-full bg-gold/25 blur-[110px]" />
@@ -96,12 +101,9 @@ export function LoginScreen({ next, error, googleEnabled }: { next: string; erro
         {/* sign-in card */}
         <section className="order-1 mx-auto w-full max-w-md lg:order-2">
           <motion.div initial={{ opacity: 0, y: 36, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: "spring", stiffness: 140, damping: 20, delay: 0.1 }}>
-            <div className="relative mx-auto mb-6 w-40 sm:w-48">
-              <div className="relative overflow-hidden rounded-[28px] bg-white p-1.5 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.55)] ring-1 ring-gold/60">
-                <Logo plate={false} className="w-full rounded-[22px]" />
-                <span aria-hidden className="animate-sheen pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/80 to-transparent" />
-              </div>
-              <span aria-hidden className="absolute -inset-3 -z-10 rounded-[34px] bg-gold/30 blur-2xl" />
+            <div className="relative mx-auto mb-7 grid place-items-center">
+              <span aria-hidden className="absolute size-44 rounded-full bg-gold/30 blur-3xl" />
+              <Seal3D size={168} />
             </div>
 
             <motion.form

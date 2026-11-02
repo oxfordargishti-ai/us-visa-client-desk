@@ -20,6 +20,7 @@ import type { getClientDetail } from "@/lib/repo/clients";
 import { tr } from "@/lib/i18n";
 import { ClientMessagesCard } from "./client-messages";
 import { IntakeCard } from "./intake-card";
+import { Tilt3D } from "./fx";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof getClientDetail>>>;
 const TABS = [
@@ -57,6 +58,7 @@ export function ClientDetail({ detail, tz, defaults, initialTab }: { detail: Det
       </nav>
 
       {/* header */}
+      <Tilt3D className="rounded-[28px]" max={4} lift={1.005}>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="hero-navy noise relative overflow-hidden rounded-[28px] p-6 shadow-[var(--shadow-lift)] sm:p-8">
         <div className="relative flex flex-col gap-6 md:flex-row md:items-center">
           <Avatar name={client.full_name} size={84} className="shadow-xl ring-4 ring-white/10" />
@@ -106,6 +108,7 @@ export function ClientDetail({ detail, tz, defaults, initialTab }: { detail: Det
           </div>
         )}
       </motion.div>
+      </Tilt3D>
 
       <div className="-mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
         <div role="tablist" className="relative flex w-max gap-1 rounded-2xl bg-surface2 p-1">

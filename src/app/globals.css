@@ -376,3 +376,36 @@ textarea {
   text-transform: none;
   letter-spacing: 0.02em;
 }
+
+/* ───────── ambient effects (fx.tsx) — transform/opacity only ───────── */
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(40px);
+  animation: aurora 20s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes aurora {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(8%, 6%, 0) scale(1.12); }
+  66% { transform: translate3d(-6%, 4%, 0) scale(0.92); }
+}
+.spark {
+  opacity: 0;
+  animation: spark linear infinite;
+  box-shadow: 0 0 8px 2px rgba(227, 201, 146, 0.7);
+}
+@keyframes spark {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  12% { opacity: 0.9; }
+  100% { transform: translate3d(14px, -320px, 0); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob, .spark { animation: none; }
+}
+
+/* Decorative glows may extend past the edge; never let them create sideways scrolling on phones. */
+html,
+body {
+  overflow-x: clip;
+}

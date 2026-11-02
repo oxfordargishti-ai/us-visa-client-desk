@@ -145,7 +145,7 @@ export function GmailView({ clients, initialThread, initialClient, error, justCo
                 [Unplug, "Disconnect any time", "One click deletes the stored access and revokes it at Google."],
               ].map(([I, t, d]) => {
                 const Icon = I as typeof ShieldCheck;
-                return <li key={t as string} className="bg-surface p-5"><Icon className="mb-2 size-5 text-goldink" /><p className="font-semibold">{t as string}</p><p className="mt-0.5 text-sm text-muted">{d as string}</p></li>;
+                return <li key={t as string} className="bg-surface p-5"><Icon className="mb-2 size-5 text-goldink" /><p className="font-semibold">{tr(t as string)}</p><p className="mt-0.5 text-sm text-muted">{tr(d as string)}</p></li>;
               })}
             </ul>
           </Card>
