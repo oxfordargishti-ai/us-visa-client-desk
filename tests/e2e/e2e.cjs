@@ -43,7 +43,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // ── AI approval workflow ──
   const before = (await api('GET', '/api/tasks?view=all&limit=300')).body.tasks.length;
-  await page.click('button:has-text("New task") >> nth=0');
+  // Header "Create new" → chooser → Task
+  await page.click('button:has-text("Create new") >> nth=0');
+  await page.click('[role=dialog] button:has-text("Task")');
   await page.waitForSelector('textarea[aria-label="Describe the task"]');
   await page.fill('textarea[aria-label="Describe the task"]', 'Call Karen tomorrow at 3 PM to prepare him for his U.S. visa interview. Remind me five hours before.');
   await page.click('button:has-text("Preview task")');
@@ -106,7 +108,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await first.click();
   await page.waitForSelector('text=Done — nicely handled', { timeout: 8000 });
   await page.screenshot({ path: (SHOTS + '/e2e-complete.png') });
-  const doneName = label.replace('Complete "', '').replace(/"$/, '');
+  const doneName = label.replace(/^Complete ["“]/, '').replace(/["”]$/, '');
   const comp = (await api('GET', '/api/tasks?view=completed&limit=50')).body.tasks;
   check('checking a task completes it (with undo toast)', comp.some((t) => t.title === doneName), doneName);
 

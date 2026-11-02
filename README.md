@@ -126,6 +126,17 @@ The app requests **read-only** Gmail access. It cannot send, delete, archive or 
 
 ---
 
+## Languages, client reminders and DS-160 intake
+
+**Languages.** The whole interface is available in English, Armenian (Հայերեն) and Russian (Русский) — the 🌐 button in the top bar, the pills in the sidebar/menu, Settings, or the sign-in screen. Menus, dates and the calendar switch together; the choice is kept in a cookie and in your preferences. Translations live in `src/lib/i18n/{hy,ru}.ts`, keyed by the English text (anything untranslated simply shows in English).
+
+**Reminders to clients (email + SMS).** Each client has two consent switches (Email / SMS) on their profile — nothing is ever sent to a client unless you turn on the channel they agreed to. Interview reminders then go out automatically (default 1 day and 2 hours before; change it in Settings → Reminders to clients) in the client's own language, from the same every-minute scheduler. From the client page you can also send a "missing documents" request (built from their checklist) or your own text, by email or SMS, after reviewing it.
+* Email uses the same SMTP settings as your own fallback emails. To reach any client address, verify your domain (e.g. `usvisawithargishti.com`) with your email provider (Resend → Domains) and set `SMTP_FROM` to an address on it.
+* SMS uses Twilio: set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`. Armenian/Russian SMS use 70 characters per part, so a reminder is usually 2–3 parts.
+* Every message is logged on the client page with its outcome; each automatic reminder is sent at most once (idempotency key), and after a scheduler outage only the closest reminder is sent.
+
+**DS-160 intake.** The form site can create clients automatically: it POSTs each submission to `/api/intake/ds160` with `Authorization: Bearer <INTAKE_SECRET>` and a body like `{ "id": "<submission id>", "language": "hy", "data": { …answers… } }`. The desk finds the name, email and phone wherever they are in the answers, creates the client (or attaches to the existing one with the same email/phone, without overwriting what you typed), stores all answers (shown on the client page under **DS-160 answers**), adds a "Review DS-160 answers" task and an in-app alert. Re-sending the same submission id does nothing. Send answers only — not passport scans (Vercel limits request bodies to 4.5 MB).
+
 ## Phones, iOS and notifications
 
 * **Android / desktop Chrome & Edge:** use the browser's *Install app* (or the button in the sidebar/Notifications page) → Notifications → **Turn on alerts**. Alerts also work in a normal tab.

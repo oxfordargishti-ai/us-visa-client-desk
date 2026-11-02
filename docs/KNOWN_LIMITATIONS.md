@@ -36,3 +36,12 @@ These were exercised against local stand-ins (and unit tests) but **not** agains
 
 ## Upload size on Vercel
 Vercel rejects request bodies larger than 4.5 MB before they reach the app, so on Vercel uploads are capped at **4 MB** per file (15 MB elsewhere). The app checks this in the browser and explains it. Lifting it requires uploading straight from the browser to the storage bucket with a signed upload link (plus a CORS rule on the bucket) — not implemented yet.
+
+## Languages
+Dates are formatted by the browser's built-in language data. All current phone and desktop browsers include Armenian; the stripped-down headless browser used in the automated tests does not, so those tests see English month names in Armenian mode (and a harmless React re-render warning). Russian is unaffected.
+
+## Client reminders
+Not verified here against the real Twilio API or a real email provider sending to client addresses (both run against local stand-ins in the tests). Twilio delivery to Armenian numbers depends on your Twilio account's sender settings; check the first messages in Twilio's console. Clients can't reply STOP automatically outside the US/Canada — turn their SMS switch off if they ask.
+
+## DS-160 intake
+The desk side is complete and tested; the form site still has to be changed to call it (needs access to that site's code).

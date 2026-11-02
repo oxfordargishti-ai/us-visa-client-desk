@@ -26,6 +26,8 @@ sleep 1
 export ANTHROPIC_API_KEY=test-key ANTHROPIC_BASE_URL=http://127.0.0.1:4010
 export GOOGLE_CLIENT_ID=cid GOOGLE_CLIENT_SECRET=csec GOOGLE_TEST_ORIGIN=http://127.0.0.1:4010 GOOGLE_LOGIN_ENABLED=true
 export APP_URL=http://localhost:3000 CRON_SECRET=dev-cron-secret-123456 GMAIL_ACCOUNT=info@usvisawithargishti.com
+export TWILIO_ACCOUNT_SID=ACe2e TWILIO_AUTH_TOKEN=e2e-token TWILIO_FROM=+15550001111 TWILIO_API_BASE=http://127.0.0.1:4010
+export INTAKE_SECRET=e2e-intake-secret-0123456789abcdef
 export OWNER_EMAIL=demo@example.com OWNER_INITIAL_PASSWORD='DemoPass2026!' OWNER_NAME=Argishti
 rm -rf storage-local
 
@@ -55,4 +57,5 @@ curl -s -o /dev/null http://localhost:3000/dashboard || true
 
 node tests/e2e/e2e.cjs
 node tests/e2e/e2e-mobile.cjs
+node tests/e2e/e2e-new.cjs
 echo "Screenshots: $SHOTS"

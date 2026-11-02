@@ -47,12 +47,16 @@ const check = (name, ok, extra = '') => { results.push(ok); console.log(`${ok ? 
   await m.screenshot({ path: (SHOTS + '/m-dashboard2.png') });
   const nav = await m.locator('nav[aria-label="Primary"]').boundingBox();
   check('mobile bottom navigation is visible at the bottom', nav && nav.y + nav.height > 800, JSON.stringify(nav));
-  await m.tap('button[aria-label="Quick add task"]');
+  await m.tap('button[aria-label="Create new"]');
   await m.waitForSelector('[role=dialog]'); await m.waitForTimeout(800);
-  check('one-tap Quick Add opens from the bottom bar', await m.locator('[role=dialog] >> text=New task').count() > 0);
+  check('the big ＋ offers Task / Client / Interview / Document', (await m.locator('[role=dialog] button').filter({ hasText: /^(Task|Client|Interview|Document)/ }).count()) === 4);
+  await m.screenshot({ path: (SHOTS + '/m-create.png') });
+  await m.tap('[role=dialog] button:has-text("Task")'); await m.waitForTimeout(800);
+  check('choosing Task opens Quick Add', await m.locator('[role=dialog] >> text=New task').count() > 0);
   await m.screenshot({ path: (SHOTS + '/m-quickadd-ai.png') });
   await m.keyboard.press('Escape'); await m.waitForTimeout(500);
-  await m.tap('button[aria-label="More"]'); await m.waitForTimeout(800);
+  await m.tap('button[aria-label="Menu"]'); await m.waitForTimeout(800);
+  check('Menu lists every section with descriptions', (await m.locator('[role=dialog] a[href^="/"]').count()) === 9);
   await m.screenshot({ path: (SHOTS + '/m-more.png') });
   await m.keyboard.press('Escape');
   for (const r of ['calendar', 'clients', 'interviews', 'gmail', 'documents', 'notifications', 'settings']) {

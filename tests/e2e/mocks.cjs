@@ -36,6 +36,13 @@ http.createServer((req, res) => {
     const json = (o, code = 200) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(o)); };
     const p = url.pathname;
 
+    // ───── Twilio (SMS to clients) ─────
+    if (/^\/2010-04-01\/Accounts\/[^/]+\/Messages\.json$/.test(p) && req.method === 'POST') {
+      const f = Object.fromEntries(new URLSearchParams(raw));
+      if (!/^\+\d{8,15}$/.test(f.To || '')) return json({ code: 21211, message: "The 'To' number is not a valid phone number." }, 400);
+      return json({ sid: 'SM' + Date.now(), to: f.To, status: 'queued' }, 201);
+    }
+
     // ───── Anthropic ─────
     if (p === '/v1/messages' && req.method === 'POST') {
       const body = JSON.parse(raw);
