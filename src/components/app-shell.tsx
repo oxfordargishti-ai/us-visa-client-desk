@@ -298,7 +298,7 @@ export function AppShell({ children, initialUnread, ...base }: Props) {
         <div className="grid grid-cols-2 gap-3">
           {CREATE.map((c, i) => (
             <motion.button
-              key={tr(c.kind)}
+              key={c.kind}
               initial={{ opacity: 0, y: 14, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 0.04 * i, type: "spring", stiffness: 420, damping: 30 }}

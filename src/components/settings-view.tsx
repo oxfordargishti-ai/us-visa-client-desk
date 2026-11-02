@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { BellRing, Brain, CalendarSync, CheckCircle2, Database, Download, KeyRound, Lock, Palette, ShieldCheck, TriangleAlert, XCircle, Mail, Globe, HardDrive, Timer, Cpu } from "lucide-react";
+import { Send, BellRing, Brain, CalendarSync, CheckCircle2, Database, Download, KeyRound, Lock, Palette, ShieldCheck, TriangleAlert, XCircle, Mail, Globe, HardDrive, Timer, Cpu } from "lucide-react";
 import { Button, Card, Chip, Field, Input, Rise, Segmented, Select, Stagger, Switch, cn, useToast } from "./ui";
 import { useApp } from "./app-context";
 import { useTheme } from "./providers";
@@ -48,7 +48,7 @@ export function SettingsView({ prefs: initial, email, name, flash }: { prefs: Pr
       toast({ tone: "error", title: tr("Couldn't save"), body: e instanceof ApiError ? e.message : undefined });
     }
   }
-  const toggleOffset = (key: "default_task_reminders" | "default_interview_reminders", m: number) => {
+  const toggleOffset = (key: "default_task_reminders" | "default_interview_reminders" | "client_reminder_offsets", m: number) => {
     const cur = p[key];
     save({ [key]: cur.includes(m) ? cur.filter((x) => x !== m) : [...cur, m].sort((a, b) => a - b) } as Partial<Prefs>);
   };
@@ -94,6 +94,21 @@ export function SettingsView({ prefs: initial, email, name, flash }: { prefs: Pr
             <Field label={tr("Language")} hint={tr("Menus, dates and the calendar switch together.")}><LanguagePills /></Field>
             <Field label={tr("Theme")}><Segmented<"light" | "dark" | "system"> id="theme" value={theme} onChange={(t) => { setTheme(t); }} options={[{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }, { value: "system", label: "Auto" }]} /></Field>
             <Field label={tr("Timezone")} hint={tr("All task times and reminders are shown in this zone (stored as UTC).")}><Select value={p.timezone} onChange={(e) => save({ timezone: e.target.value })}>{tzs.map((t) => <option key={t} value={t}>{tr(t)}</option>)}</Select></Field>
+          </div>
+        </Card>
+      </Rise>
+
+      <Rise>
+        <Card className="p-5">
+          <Head icon={<Send className="size-4" />} title={tr("Reminders to clients")} sub="Interview reminders by email and SMS, in each client's language" />
+          <Row title={tr("Send interview reminders to clients")} desc="Only to clients who agreed, on the channels switched on in their profile." checked={p.client_reminders_enabled} onChange={(v) => save({ client_reminders_enabled: v })} />
+          <div className="mt-4"><OffsetPicker label={tr("When")} min={15} value={p.client_reminder_offsets} onToggle={(m) => toggleOffset("client_reminder_offsets", m)} /></div>
+          <Field label={tr("Your phone number in the messages")} hint={tr("Clients see it so they can call you back.")} className="mt-5">
+            <Input inputMode="tel" defaultValue={p.business_phone ?? ""} placeholder="+374 99 000000" onBlur={(e) => e.target.value !== (p.business_phone ?? "") && save({ business_phone: e.target.value || null })} />
+          </Field>
+          <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <SetupLine ok={app.caps.email} label={tr("Email to clients")} detail={app.caps.email ? tr("Ready — needs your domain verified with your email provider to reach any address") : tr("Add SMTP settings on the server")} />
+            <SetupLine ok={Boolean(app.caps.sms)} label="SMS" detail={app.caps.sms ? tr("Ready (Twilio)") : tr("Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_FROM on the server")} />
           </div>
         </Card>
       </Rise>
@@ -186,7 +201,7 @@ function Head({ icon, title, sub }: { icon: React.ReactNode; title: string; sub?
   return (
     <div className="mb-4 flex items-center gap-3">
       <span className="grid size-9 place-items-center rounded-xl bg-gold/15 text-goldink">{icon}</span>
-      <div><h2 className="text-[16px] font-semibold">{title}</h2>{sub && <p className="text-[13px] text-muted">{sub}</p>}</div>
+      <div><h2 className="text-[16px] font-semibold">{tr(title)}</h2>{sub && <p className="text-[13px] text-muted">{tr(sub)}</p>}</div>
     </div>
   );
 }
@@ -198,12 +213,21 @@ function Row({ title, desc, checked, onChange }: { title: string; desc: string; 
     </div>
   );
 }
-function OffsetPicker({ label, value, onToggle }: { label: string; value: number[]; onToggle: (m: number) => void }) {
+function SetupLine({ ok, label, detail }: { ok: boolean; label: string; detail: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl bg-surface2 p-3">
+      <span className={cn("mt-0.5 size-2.5 shrink-0 rounded-full", ok ? "bg-success" : "bg-warning")} />
+      <div><p className="text-sm font-medium">{label}</p><p className="text-xs text-muted">{detail}</p></div>
+    </div>
+  );
+}
+
+function OffsetPicker({ label, value, onToggle, min = 0 }: { label: string; value: number[]; onToggle: (m: number) => void; min?: number }) {
   return (
     <div>
       <p className="mb-2 text-[13px] font-medium">{label}</p>
       <div className="flex flex-wrap gap-2">
-        {REMINDER_PRESETS.map((r) => {
+        {REMINDER_PRESETS.filter((r) => r.minutes >= min).map((r) => {
           const on = value.includes(r.minutes);
           return <button key={r.minutes} onClick={() => onToggle(r.minutes)} aria-pressed={on} className={cn("rounded-full px-3 py-1.5 text-[13px] font-medium ring-1 transition", on ? "bg-gold/25 text-[#6b5019] ring-gold dark:text-gold2" : "bg-surface text-muted ring-line hover:ring-gold/60")}>{on && "✓ "}{tr(r.label)}</button>;
         })}

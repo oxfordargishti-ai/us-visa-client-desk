@@ -129,7 +129,7 @@ function InterviewPanel({ iv, index }: { iv: InterviewRow; index: number }) {
       <div className="flex flex-wrap items-center gap-2 border-t border-line px-5 py-3">
         <label className="flex items-center gap-2 text-xs font-medium text-muted">
           {tr("Preparation")}
-          <Select value={tr(iv.prep_status)} onChange={(e) => patch({ prep_status: e.target.value }, "Preparation updated")} className="h-9 w-36 text-sm" aria-label={tr("Preparation status")}>
+          <Select value={iv.prep_status} onChange={(e) => patch({ prep_status: e.target.value }, "Preparation updated")} className="h-9 w-36 text-sm" aria-label={tr("Preparation status")}>
             {PREP_STATUSES.map((s) => <option key={s} value={s}>{tr(s)}</option>)}
           </Select>
         </label>
@@ -175,7 +175,7 @@ function InterviewPanel({ iv, index }: { iv: InterviewRow; index: number }) {
       <div className="flex flex-wrap items-center gap-2 border-t border-line bg-surface2/50 px-5 py-3">
         <Button size="sm" variant="soft" onClick={() => setResched(true)}><CalendarClock className="size-4" />{" "}{tr("Reschedule")}</Button>
         <Button size="sm" variant="soft" onClick={() => app.openQuickAdd({ title: `Follow up with ${iv.client_name} after interview`, clientId: iv.client_id, category: "Client Phone Call", dueAt: DateTime.fromISO(iv.interview_at).plus({ days: 1 }).toUTC().toISO() })}><ListPlus className="size-4" />{" "}{tr("Follow-up task")}</Button>
-        <Select value={tr(iv.outcome)} onChange={(e) => patch({ outcome: e.target.value }, `Outcome: ${e.target.value}`)} className="h-9 w-44 text-sm" aria-label={tr("Interview outcome")}>
+        <Select value={iv.outcome} onChange={(e) => patch({ outcome: e.target.value }, `Outcome: ${e.target.value}`)} className="h-9 w-44 text-sm" aria-label={tr("Interview outcome")}>
           {INTERVIEW_OUTCOMES.map((o) => <option key={o} value={o}>{tr(o)}</option>)}
         </Select>
         <Link href={`/clients/${iv.client_id}`} className="ml-auto text-sm font-medium text-goldink hover:underline">

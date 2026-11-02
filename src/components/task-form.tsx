@@ -43,7 +43,7 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
         <Field label={tr("Category")}>
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 size-2.5 -translate-y-1/2 rounded-full" style={{ background: CATEGORY_COLORS[draft.category] }} />
-            <Select value={tr(draft.category)} onChange={(e) => set("category", e.target.value as Draft["category"])} className="pl-9">
+            <Select value={draft.category} onChange={(e) => set("category", e.target.value as Draft["category"])} className="pl-9">
               {TASK_CATEGORIES.map((c) => (
                 <option key={c} value={c}>{tr(c)}</option>
               ))}
@@ -141,7 +141,7 @@ export function TaskForm({ draft, onChange, clients, tz, flags = [], candidates 
         <Field label={tr("Repeat")}>
           <div className="relative">
             <Repeat className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
-            <Select value={tr(draft.recurrence)} onChange={(e) => set("recurrence", e.target.value as Draft["recurrence"])} className="pl-10" disabled={draft.noDate}>
+            <Select value={draft.recurrence} onChange={(e) => set("recurrence", e.target.value as Draft["recurrence"])} className="pl-10" disabled={draft.noDate}>
               <option value="">{tr("Doesn't repeat")}</option>
               <option value="daily">{tr("Every day")}</option>
               <option value="weekdays">{tr("Every weekday")}</option>

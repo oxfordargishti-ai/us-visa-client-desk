@@ -167,7 +167,7 @@ export function TaskRow({ task, compact = false, showClient = true, order }: { t
       />
       <button onClick={open} className="min-w-0 flex-1 text-left">
         <span className="flex items-center gap-2">
-          <PriorityDot p={tr(task.priority)} />
+          <PriorityDot p={task.priority} />
           <span className={cn("line-clamp-2 text-[15px] font-medium leading-snug transition-colors sm:line-clamp-1", done && "text-muted line-through")}>{tr(task.title)}</span>
           {task.recurrence && <Repeat className="size-3.5 shrink-0 text-muted" aria-label={`Repeats ${tr(task.recurrence)}`} />}
         </span>

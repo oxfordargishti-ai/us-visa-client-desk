@@ -15,6 +15,10 @@ export interface Prefs {
   ai_email_analysis: boolean;
   ai_planner_suggestions: boolean;
   document_retention_days: number | null;
+  language: "en" | "hy" | "ru";
+  client_reminders_enabled: boolean;
+  client_reminder_offsets: number[];
+  business_phone: string | null;
 }
 
 export interface Task {
@@ -66,6 +70,9 @@ export interface ClientRow {
   phone: string | null;
   whatsapp: string | null;
   preferred_language: string | null;
+  notify_email: boolean;
+  notify_sms: boolean;
+  source: string | null;
   created_at: string;
   updated_at: string;
 }

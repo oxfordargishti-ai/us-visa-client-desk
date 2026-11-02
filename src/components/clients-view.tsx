@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, FileWarning, ListChecks, Mail, MessageCircle, Phone, Plus, Search, UserPlus, Users, CalendarClock } from "lucide-react";
-import { Avatar, Button, Card, Chip, EmptyState, Field, Input, Modal, Rise, Select, Stagger, cn, useToast } from "./ui";
+import { Avatar, Button, Card, Chip, EmptyState, Field, Input, Modal, Rise, Select, Stagger, Switch, cn, useToast } from "./ui";
 import { useApp } from "./app-context";
 import { api, ApiError } from "@/lib/client/api";
 import { APPLICATION_STATUSES, VISA_CATEGORIES } from "@/lib/constants";
@@ -152,7 +152,7 @@ function Mini({ icon, label, value, warn, strong }: { icon: React.ReactNode; lab
 export function NewClientModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const toast = useToast();
-  const empty = { full_name: "", email: "", phone: "", whatsapp: "", preferred_language: "hy", visa_category: VISA_CATEGORIES[0] as string, embassy: "U.S. Embassy Yerevan", application_status: "New Client" as string };
+  const empty = { full_name: "", email: "", phone: "", whatsapp: "", preferred_language: "hy", visa_category: VISA_CATEGORIES[0] as string, embassy: "U.S. Embassy Yerevan", application_status: "New Client" as string, notify_email: false, notify_sms: false };
   const [f, setF] = React.useState(empty);
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
@@ -160,14 +160,14 @@ export function NewClientModal({ open, onClose }: { open: boolean; onClose: () =
     if (open) (setF(empty), setErr(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-  const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
+  const set = (k: "full_name" | "email" | "phone" | "whatsapp" | "preferred_language" | "visa_category" | "embassy" | "application_status") => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   async function submit(e?: React.FormEvent) {
     e?.preventDefault();
     setBusy(true);
     setErr(null);
     try {
       const r = await api<{ client: { id: string } }>("/api/clients", {
-        body: { full_name: f.full_name, email: f.email, phone: f.phone, whatsapp: f.whatsapp, preferred_language: f.preferred_language, case: { visa_category: f.visa_category, embassy: f.embassy, application_status: f.application_status } },
+        body: { full_name: f.full_name, email: f.email, phone: f.phone, whatsapp: f.whatsapp, preferred_language: f.preferred_language, notify_email: f.notify_email, notify_sms: f.notify_sms, case: { visa_category: f.visa_category, embassy: f.embassy, application_status: f.application_status } },
       });
       toast({ tone: "success", title: tr("Client created"), body: f.full_name });
       onClose();
@@ -195,8 +195,13 @@ export function NewClientModal({ open, onClose }: { open: boolean; onClose: () =
           </Field>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={tr("Visa category")}><Select value={tr(f.visa_category)} onChange={set("visa_category")}>{VISA_CATEGORIES.map((v) => <option key={v} value={v}>{tr(v)}</option>)}</Select></Field>
-          <Field label={tr("Status")}><Select value={tr(f.application_status)} onChange={set("application_status")}>{APPLICATION_STATUSES.map((v) => <option key={v} value={v}>{tr(v)}</option>)}</Select></Field>
+          <Field label={tr("Visa category")}><Select value={f.visa_category} onChange={set("visa_category")}>{VISA_CATEGORIES.map((v) => <option key={v} value={v}>{tr(v)}</option>)}</Select></Field>
+          <Field label={tr("Status")}><Select value={f.application_status} onChange={set("application_status")}>{APPLICATION_STATUSES.map((v) => <option key={v} value={v}>{tr(v)}</option>)}</Select></Field>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl bg-surface2 p-4">
+          <p className="w-full text-sm font-semibold">{tr("Reminders to this client")} <span className="font-normal text-muted">· {tr("only if the client agreed")}</span></p>
+          <label className="flex items-center gap-2 text-sm"><Switch checked={f.notify_email} onChange={(v) => setF({ ...f, notify_email: v })} label={tr("Email reminders")} /> {tr("Email")}</label>
+          <label className="flex items-center gap-2 text-sm"><Switch checked={f.notify_sms} onChange={(v) => setF({ ...f, notify_sms: v })} label={tr("SMS reminders")} /> SMS</label>
         </div>
         <Field label={tr("Embassy or consulate")}><Input value={f.embassy} onChange={set("embassy")} /></Field>
         {err && <p role="alert" className="rounded-xl bg-danger/10 px-3.5 py-2.5 text-sm font-medium text-danger">{err}</p>}

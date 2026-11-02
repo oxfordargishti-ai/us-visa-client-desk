@@ -28,6 +28,10 @@ export const PrefsPatch = z.object({
   ai_email_analysis: z.boolean().optional(),
   ai_planner_suggestions: z.boolean().optional(),
   document_retention_days: z.number().int().min(30).max(3650).nullable().optional(),
+  language: z.enum(["en", "hy", "ru"]).optional(),
+  client_reminders_enabled: z.boolean().optional(),
+  client_reminder_offsets: z.array(z.number().int().min(15).max(20_160)).max(4).optional(),
+  business_phone: z.string().trim().max(40).nullable().optional(),
 });
 
 export async function updatePrefs(q: Q, userId: string, patch: z.infer<typeof PrefsPatch>): Promise<Prefs> {

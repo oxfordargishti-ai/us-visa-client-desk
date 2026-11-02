@@ -7,8 +7,10 @@ import { LANGS, LANG_COOKIE, getLang, type Lang } from "@/lib/i18n";
 import { cn } from "./ui";
 
 /** Saves the language for a year and reloads so every screen, date and calendar switches together. */
-export function setLanguage(code: Lang) {
+export async function setLanguage(code: Lang) {
   document.cookie = `${LANG_COOKIE}=${code}; path=/; max-age=31536000; samesite=lax`;
+  // Also remember it on the server (used for reminders it sends you). Ignored on the sign-in page.
+  await fetch("/api/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ language: code }) }).catch(() => undefined);
   window.location.reload();
 }
 

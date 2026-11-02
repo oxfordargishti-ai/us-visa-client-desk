@@ -26,16 +26,19 @@ export const ClientInput = z.object({
   phone: optText(40),
   whatsapp: optText(40),
   preferred_language: optText(20),
+  notify_email: z.boolean().optional(),
+  notify_sms: z.boolean().optional(),
   case: CaseInput.optional(),
 });
 export const ClientPatch = ClientInput.omit({ case: true }).partial();
 export const CasePatch = CaseInput.partial();
 
 // ───────────── clients ─────────────
-export async function createClient(q: Q, userId: string, input: z.infer<typeof ClientInput>) {
+export async function createClient(q: Q, userId: string, input: z.infer<typeof ClientInput>, source = "manual") {
   const [client] = await q.query<ClientRow>(
-    `INSERT INTO clients (user_id, full_name, email, phone, whatsapp, preferred_language) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-    [userId, input.full_name, input.email ?? null, input.phone ?? null, input.whatsapp ?? null, input.preferred_language ?? null],
+    `INSERT INTO clients (user_id, full_name, email, phone, whatsapp, preferred_language, notify_email, notify_sms, source)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+    [userId, input.full_name, input.email ?? null, input.phone ?? null, input.whatsapp ?? null, input.preferred_language ?? null, input.notify_email ?? false, input.notify_sms ?? false, source],
   );
   const kase = await createCase(q, userId, client.id, input.case ?? CaseInput.parse({}));
   await logActivity(q, { userId, clientId: client.id, entityType: "client", entityId: client.id, action: "client.created", summary: `Client created: ${client.full_name}` });
@@ -47,9 +50,9 @@ export async function updateClient(q: Q, userId: string, id: string, patch: z.in
   if (!existing) throw notFound("Client not found");
   const m = { ...existing, ...patch };
   const [client] = await q.query<ClientRow>(
-    `UPDATE clients SET full_name=$3, email=$4, phone=$5, whatsapp=$6, preferred_language=$7, updated_at=now()
+    `UPDATE clients SET full_name=$3, email=$4, phone=$5, whatsapp=$6, preferred_language=$7, notify_email=$8, notify_sms=$9, updated_at=now()
       WHERE id=$1 AND user_id=$2 RETURNING *`,
-    [id, userId, m.full_name, m.email ?? null, m.phone ?? null, m.whatsapp ?? null, m.preferred_language ?? null],
+    [id, userId, m.full_name, m.email ?? null, m.phone ?? null, m.whatsapp ?? null, m.preferred_language ?? null, m.notify_email ?? false, m.notify_sms ?? false],
   );
   await logActivity(q, { userId, clientId: id, entityType: "client", entityId: id, action: "client.updated", summary: `Client details updated: ${client.full_name}` });
   return client;

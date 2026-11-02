@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   Archive, Check, ChevronRight, Download, Eye, FileText, History, ListChecks, Mail, MessageCircle, Mic, MicOff, Paperclip, Pencil, Phone, Pin, PinOff, Plus, Skull, StickyNote, Trash2, Upload, Wand2, Landmark, ShieldAlert, Search, CalendarPlus, Image as ImageIcon, FileCheck2, Link2Off, ExternalLink,
 } from "lucide-react";
-import { Avatar, Button, Card, Chip, EmptyState, Field, IconButton, Input, Modal, Segmented, Select, Textarea, cn, useToast, EASE } from "./ui";
+import { Avatar, Button, Card, Chip, EmptyState, Field, IconButton, Input, Modal, Segmented, Select, Switch, Textarea, cn, useToast, EASE } from "./ui";
 import { useApp } from "./app-context";
 import { TaskRow } from "./task-bits";
 import { ScheduleModal } from "./interviews-view";
@@ -18,6 +18,7 @@ import { ago, bytes, fmt, phoneHref, STATUS_TONE, whatsappHref } from "@/lib/cli
 import { SPEECH_LANGS, useSpeech } from "@/lib/client/hooks";
 import type { getClientDetail } from "@/lib/repo/clients";
 import { tr } from "@/lib/i18n";
+import { ClientMessagesCard } from "./client-messages";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof getClientDetail>>>;
 const TABS = [
@@ -164,10 +165,11 @@ export function ClientDetail({ detail, tz, defaults, initialTab }: { detail: Det
                 <Card className="space-y-3 p-5 text-sm">
                   <h2 className="text-[15px] font-semibold">{tr("Contact")}</h2>
                   {[["Phone", client.phone], ["WhatsApp", client.whatsapp], ["Email", client.email]].map(([l, v]) => (
-                    <div key={l} className="flex items-center justify-between gap-3 border-b border-line pb-2 last:border-0 last:pb-0"><span className="text-muted">{l}</span><span className="truncate font-medium">{v || "—"}</span></div>
+                    <div key={l} className="flex items-center justify-between gap-3 border-b border-line pb-2 last:border-0 last:pb-0"><span className="text-muted">{tr(l)}</span><span className="truncate font-medium">{v || "—"}</span></div>
                   ))}
                   <p className="pt-1 text-xs text-muted">{tr("Client since")}{" "}{fmt(client.created_at, tz, "d MMM yyyy")}</p>
                 </Card>
+                <ClientMessagesCard client={client} />
                 <DangerZone client={client} />
               </div>
             </div>
@@ -225,12 +227,12 @@ function CaseCard({ kase, cases, setCaseId, clientId }: { kase: Detail["cases"][
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label={tr("Application status")}><Select value={tr(f.application_status)} onChange={(e) => setF({ ...f, application_status: e.target.value as typeof f.application_status })}>{APPLICATION_STATUSES.map((s) => <option key={s} value={s}>{tr(s)}</option>)}</Select></Field>
-        <Field label={tr("Visa category")}><Select value={tr(f.visa_category)} onChange={(e) => setF({ ...f, visa_category: e.target.value })}>{[...new Set([...VISA_CATEGORIES, f.visa_category])].map((s) => <option key={s} value={s}>{tr(s)}</option>)}</Select></Field>
+        <Field label={tr("Application status")}><Select value={f.application_status} onChange={(e) => setF({ ...f, application_status: e.target.value as typeof f.application_status })}>{APPLICATION_STATUSES.map((s) => <option key={s} value={s}>{tr(s)}</option>)}</Select></Field>
+        <Field label={tr("Visa category")}><Select value={f.visa_category} onChange={(e) => setF({ ...f, visa_category: e.target.value })}>{[...new Set([...VISA_CATEGORIES, f.visa_category])].map((s) => <option key={s} value={s}>{tr(s)}</option>)}</Select></Field>
         <Field label={tr("Embassy or consulate")}><Input value={f.embassy} onChange={(e) => setF({ ...f, embassy: e.target.value })} /></Field>
         <Field label={tr("DS-160 confirmation number")}><Input value={f.ds160_confirmation} onChange={(e) => setF({ ...f, ds160_confirmation: e.target.value })} placeholder={tr("AA00XXXXXX")} autoComplete="off" /></Field>
-        <Field label={tr("Payment status")}><Select value={tr(f.payment_status)} onChange={(e) => setF({ ...f, payment_status: e.target.value as typeof f.payment_status })}>{PAYMENT_STATUSES.map((s) => <option key={s} value={s}>{tr(s)}</option>)}</Select></Field>
-        <Field label={tr("Interview preparation")}><Select value={tr(f.interview_prep_status)} onChange={(e) => setF({ ...f, interview_prep_status: e.target.value as typeof f.interview_prep_status })}>{PREP_STATUSES.map((s) => <option key={s} value={s}>{tr(s)}</option>)}</Select></Field>
+        <Field label={tr("Payment status")}><Select value={f.payment_status} onChange={(e) => setF({ ...f, payment_status: e.target.value as typeof f.payment_status })}>{PAYMENT_STATUSES.map((s) => <option key={s} value={s}>{tr(s)}</option>)}</Select></Field>
+        <Field label={tr("Interview preparation")}><Select value={f.interview_prep_status} onChange={(e) => setF({ ...f, interview_prep_status: e.target.value as typeof f.interview_prep_status })}>{PREP_STATUSES.map((s) => <option key={s} value={s}>{tr(s)}</option>)}</Select></Field>
       </div>
       <AnimatePresence>
         {dirty && (
@@ -491,10 +493,10 @@ function Timeline({ activity, notes, tz }: { activity: Detail["activity"]; notes
 function EditClientModal({ open, onClose, client }: { open: boolean; onClose: () => void; client: Detail["client"] }) {
   const app = useApp();
   const toast = useToast();
-  const [f, setF] = React.useState({ full_name: client.full_name, email: client.email ?? "", phone: client.phone ?? "", whatsapp: client.whatsapp ?? "", preferred_language: client.preferred_language ?? "hy" });
+  const [f, setF] = React.useState({ full_name: client.full_name, email: client.email ?? "", phone: client.phone ?? "", whatsapp: client.whatsapp ?? "", preferred_language: client.preferred_language ?? "hy", notify_email: client.notify_email, notify_sms: client.notify_sms });
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
-  React.useEffect(() => { if (open) { setF({ full_name: client.full_name, email: client.email ?? "", phone: client.phone ?? "", whatsapp: client.whatsapp ?? "", preferred_language: client.preferred_language ?? "hy" }); setErr(null); } }, [open, client]);
+  React.useEffect(() => { if (open) { setF({ full_name: client.full_name, email: client.email ?? "", phone: client.phone ?? "", whatsapp: client.whatsapp ?? "", preferred_language: client.preferred_language ?? "hy", notify_email: client.notify_email, notify_sms: client.notify_sms }); setErr(null); } }, [open, client]);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   return (
     <Modal open={open} onClose={onClose} title={tr("Edit client")} size="md" footer={<><Button variant="outline" onClick={onClose}>{tr("Cancel")}</Button><Button variant="gold" loading={busy} disabled={!f.full_name.trim()} onClick={async () => { setBusy(true); setErr(null); try { await api(`/api/clients/${client.id}`, { method: "PATCH", body: f }); toast({ tone: "success", title: tr("Client updated") }); app.bumpData(); onClose(); } catch (e) { setErr(e instanceof ApiError ? e.message : tr("Couldn't save.")); } finally { setBusy(false); } }}>{tr("Save")}</Button></>}>
@@ -505,6 +507,14 @@ function EditClientModal({ open, onClose, client }: { open: boolean; onClose: ()
           <Field label={tr("WhatsApp")}><Input value={f.whatsapp} onChange={set("whatsapp")} inputMode="tel" /></Field>
           <Field label={tr("Email")}><Input type="email" value={f.email} onChange={set("email")} /></Field>
           <Field label={tr("Language")}><Select value={f.preferred_language} onChange={set("preferred_language")}><option value="hy">{tr("Armenian")}</option><option value="ru">{tr("Russian")}</option><option value="en">{tr("English")}</option></Select></Field>
+        </div>
+        <div className="space-y-2 rounded-2xl bg-surface2 p-4">
+          <p className="text-sm font-semibold">{tr("Reminders to this client")}</p>
+          <p className="text-xs text-muted">{tr("Turn on only if the client agreed to receive messages.")}</p>
+          <div className="flex flex-wrap gap-5 pt-1">
+            <label className="flex items-center gap-2 text-sm"><Switch checked={f.notify_email} onChange={(v) => setF({ ...f, notify_email: v })} label={tr("Email reminders")} /> {tr("Email")}</label>
+            <label className="flex items-center gap-2 text-sm"><Switch checked={f.notify_sms} onChange={(v) => setF({ ...f, notify_sms: v })} label={tr("SMS reminders")} /> SMS</label>
+          </div>
         </div>
         {err && <p role="alert" className="rounded-xl bg-danger/10 px-3.5 py-2.5 text-sm font-medium text-danger">{err}</p>}
       </div>

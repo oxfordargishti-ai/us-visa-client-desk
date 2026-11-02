@@ -57,7 +57,7 @@ export function DocumentsView({ documents, clients, missing, filters }: { docume
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr("Search file names, notes, clients…")} aria-label={tr("Search documents")} className="h-12 w-full rounded-2xl border border-linestrong bg-surface pl-11 pr-4 text-[15px] shadow-soft focus:border-gold focus:outline-none focus:ring-4 focus:ring-gold/20" />
             </div>
             <Select value={filters.client} onChange={(e) => go({ client: e.target.value })} className="h-12 md:w-52" aria-label={tr("Client")}><option value="">{tr("All clients")}</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}</Select>
-            <Select value={tr(filters.category)} onChange={(e) => go({ category: e.target.value })} className="h-12 md:w-48" aria-label={tr("Category")}><option value="">{tr("All categories")}</option>{DOCUMENT_CATEGORIES.map((c) => <option key={c} value={c}>{tr(c)}</option>)}</Select>
+            <Select value={filters.category} onChange={(e) => go({ category: e.target.value })} className="h-12 md:w-48" aria-label={tr("Category")}><option value="">{tr("All categories")}</option>{DOCUMENT_CATEGORIES.map((c) => <option key={c} value={c}>{tr(c)}</option>)}</Select>
           </Rise>
           <Rise>
             <Card className="p-3 sm:p-4">

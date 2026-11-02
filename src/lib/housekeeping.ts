@@ -2,9 +2,13 @@ import { withSystem, withUser } from "./db";
 import { purgeExpiredSessions } from "./auth";
 import { purgeExpiredDocuments } from "./repo/documents";
 import { dispatchDueReminders, type DispatchResult } from "./notifications";
+import { dispatchClientReminders } from "./client-messages";
 import { refreshUnreadCount, syncDirtyEvents } from "./google";
 
 export interface CronResult extends DispatchResult {
+  clientSent: number;
+  clientFailed: number;
+  clientSkipped: number;
   documentsPurged: number;
   calendarSynced: number;
   errors: string[];
@@ -14,6 +18,11 @@ export interface CronResult extends DispatchResult {
 export async function runCron(): Promise<CronResult> {
   const errors: string[] = [];
   const dispatch = await dispatchDueReminders();
+  // Reminders to clients (email / SMS) for upcoming interviews — only for clients who agreed.
+  const clients = await dispatchClientReminders().catch((e) => {
+    errors.push(`client reminders: ${(e as Error).message}`);
+    return { clientSent: 0, clientFailed: 0, clientSkipped: 0 };
+  });
   // Heartbeat so Settings can warn if the scheduler was never wired up (or stopped).
   await withSystem((q) => q.query(
     `INSERT INTO system_state (key, value) VALUES ('cron:last_run', $1) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=now()`,
@@ -44,5 +53,5 @@ export async function runCron(): Promise<CronResult> {
       errors.push(`user ${u.id.slice(0, 8)}: ${(e as Error).message}`);
     }
   }
-  return { ...dispatch, documentsPurged, calendarSynced, errors };
+  return { ...dispatch, ...clients, documentsPurged, calendarSynced, errors };
 }
