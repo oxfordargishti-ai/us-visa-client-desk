@@ -44,6 +44,8 @@ Everything works without any keys except the features that need them (see below)
 
 ---
 
+**Online payments (Paynet, sandbox).** Set what a client owes on their page (*Online payment*); they pay it from the portal's «Վճարման տվյալներ» section through Paynet's hosted checkout. The amount always comes from your request here, and a payment counts only after Paynet's API confirms it. Setup, variables and endpoints: [docs/ONLINE_PAYMENTS.md](docs/ONLINE_PAYMENTS.md).
+
 ## What you must provide
 
 The app cannot invent these — each is a credential or account only you can create.
@@ -59,7 +61,8 @@ The app cannot invent these — each is a credential or account only you can cre
 | 7 | **Google OAuth client** | Gmail, Calendar sync, optional Google sign-in | See [Google setup](#google-gmail--calendar-setup) | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GMAIL_ACCOUNT` |
 | 8 | **SMTP account** | Email fallback for reminders | Resend, Postmark, Brevo, Gmail SMTP… | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` |
 | 9 | **S3-compatible bucket** (private) | Client documents in production | Cloudflare R2 (generous free tier), AWS S3, Backblaze B2 | `STORAGE_DRIVER=s3`, `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` |
-| 10 | **Your logo** | Already included | `assets/logo-original.png` is your file, untouched; `npm run icons` regenerates cropped/resized copies | — |
+| 10 | **Paynet test key + webhook secret** (optional) | «Վճարել առցանց» on the client portal (sandbox only) | [paynet.am](https://paynet.am) → Developers. See [docs/ONLINE_PAYMENTS.md](docs/ONLINE_PAYMENTS.md) | `PAYNET_TEST_API_KEY`, `PAYNET_WEBHOOK_SECRET` |
+| 11 | **Your logo** | Already included | `assets/logo-original.png` is your file, untouched; `npm run icons` regenerates cropped/resized copies | — |
 
 All variables are documented in [`.env.example`](.env.example). Never commit real values.
 

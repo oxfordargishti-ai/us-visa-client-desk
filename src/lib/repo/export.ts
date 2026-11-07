@@ -6,11 +6,12 @@ import { getStorage } from "../storage";
 /** Everything the owner has stored, as one JSON-serialisable object. Secrets (tokens, push keys, password hashes) are never included. */
 export async function exportAll(q: Q, userId: string) {
   const own = (table: string, extra = "") => q.query(`SELECT * FROM ${table} WHERE user_id = $1 ${extra}`, [userId]);
-  const [prefs, clients, cases, tasks, reminders, events, interviews, notes, documents, checklists, links, deliveries, activity] = await Promise.all([
+  const [prefs, clients, cases, tasks, reminders, events, interviews, notes, documents, checklists, links, deliveries, activity, paymentRequests, onlinePayments] = await Promise.all([
     own("user_preferences"), own("clients"), own("client_cases"), own("tasks"), own("task_reminders"), own("calendar_events"), own("interviews"),
     own("notes"), q.query("SELECT id, client_id, case_id, category, filename, mime_type, size_bytes, notes, source, uploaded_at, deleted_at FROM documents WHERE user_id=$1", [userId]),
     own("document_checklists"), q.query("SELECT id, client_id, thread_id, subject, snippet, from_addr, last_message_at, status, origin FROM gmail_thread_links WHERE user_id=$1", [userId]),
     own("notification_deliveries"), own("activity_logs", "ORDER BY created_at"),
+    own("payment_requests"), q.query("SELECT id, client_id, request_id, wix_application_id, order_id, amount_amd, currency, status, provider_payment_id, failure_code, livemode, rrn, duplicate, created_at, updated_at, verified_at, completed_at FROM online_payments WHERE user_id=$1", [userId]),
   ]);
   await logActivity(q, { userId, entityType: "export", action: "export.created", summary: "Full data export downloaded" });
   return {
@@ -18,6 +19,7 @@ export async function exportAll(q: Q, userId: string) {
     note: "Document files are not embedded; download them from each client's Documents tab. Secrets are never exported.",
     preferences: prefs[0] ?? null, clients, client_cases: cases, tasks, task_reminders: reminders, calendar_events: events, interviews, notes,
     documents_metadata: documents, document_checklists: checklists, gmail_thread_links: links, notification_deliveries: deliveries, activity_logs: activity,
+    payment_requests: paymentRequests, online_payments: onlinePayments,
   };
 }
 
