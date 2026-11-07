@@ -20,6 +20,7 @@ import type { getClientDetail } from "@/lib/repo/clients";
 import { tr } from "@/lib/i18n";
 import { ClientMessagesCard } from "./client-messages";
 import { IntakeCard } from "./intake-card";
+import { ClientPaymentsCard } from "./client-payments";
 import { Tilt3D } from "./fx";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof getClientDetail>>>;
@@ -174,6 +175,7 @@ export function ClientDetail({ detail, tz, defaults, initialTab }: { detail: Det
                   ))}
                   <p className="pt-1 text-xs text-muted">{tr("Client since")}{" "}{fmt(client.created_at, tz, "d MMM yyyy")}</p>
                 </Card>
+                <ClientPaymentsCard client={client} />
                 <ClientMessagesCard client={client} />
                 <DangerZone client={client} />
               </div>
